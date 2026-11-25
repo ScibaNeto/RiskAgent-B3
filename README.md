@@ -12,6 +12,8 @@ Abra a pasta inteira do projeto. No terminal integrado do PowerShell, execute:
 .\.venv\Scripts\python.exe painel.py
 ```
 
+A seção **PETR4 e Ibovespa** permite escolher a data e a janela, comparar o desempenho em base 100, visualizar a queda desde o pico e conferir o retorno realizado contra o VaR do GJR-GARCH-t. Experimente 18/05/2017.
+
 O navegador abre um HTML local com seleção de ativo, comparação dos três modelos e cenários da carteira. O painel lê a execução completa mais recente em `outputs/phase2_1/runs/`. Em um clone novo, instale as dependências conforme a seção abaixo e execute `src/phase2_risk_engine_v2.py` com o Python do ambiente para gerar a primeira análise. Os dados de mercado e os resultados gerados ficam locais.
 
 ## Estrutura

@@ -37,7 +37,17 @@ def get_observations(asset: str, as_of: str, outputs: Path) -> tuple[pd.Series, 
     if len({item[2]["sha256"] for item in matching}) > 1:
         raise ValueError("Versões conflitantes no mesmo instante.")
     known, path, entry = max(matching, key=lambda item: str(item[1]))
-    root = path.parent.resolve()
+    prices = snapshot_prices(path.parent, entry)
+    root = path.parent
+    return prices, {"dataset_version": entry["sha256"], "last_observation": entry["end_date"],
+                    "freshness_at_run": entry["quality"].get("freshness", "unknown"), "asset": asset, "known_at": known.isoformat(), "run_id": root.name,
+                    "sha256": entry["sha256"], "source": entry["provider"]}
+
+
+def snapshot_prices(run: Path, entry: dict) -> pd.Series:
+    """Reproduz uma entrada verificada da execução indicada."""
+    root = run.resolve()
+    asset = entry["asset"]
     snapshot = (root / entry["quality"]["snapshot"]).resolve()
     if not snapshot.is_relative_to(root):
         raise ValueError("Snapshot fora da execução.")
@@ -51,9 +61,7 @@ def get_observations(asset: str, as_of: str, outputs: Path) -> tuple[pd.Series, 
     prices = prices.drop(pd.to_datetime(entry["quality"]["excluded_dates"]), errors="ignore")
     if len(prices) != entry["price_count"]:
         raise ValueError("Contagem de preços divergente do manifesto.")
-    return prices, {"dataset_version": entry["sha256"], "last_observation": entry["end_date"],
-                    "freshness_at_run": entry["quality"].get("freshness", "unknown"), "asset": asset, "known_at": known.isoformat(), "run_id": root.name,
-                    "sha256": entry["sha256"], "source": entry["provider"]}
+    return prices
 
 
 if __name__ == "__main__":
