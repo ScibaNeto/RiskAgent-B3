@@ -1,0 +1,24 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RiskAgent B3 · Painel de risco</title>
+<style>
+:root{color-scheme:light;--ink:#182d28;--line:#b5c2b5;--accent:#22604b}*{box-sizing:border-box}body{margin:0;background:#f4f4ec;color:var(--ink);font:16px/1.55 "Source Sans 3",system-ui,sans-serif}header{background:#182d28;color:#f4f4ec;padding:15px max(5vw,20px);display:flex;justify-content:space-between;gap:12px}main{max-width:1080px;margin:auto;padding:35px 5vw 45px}h1,h2{font-family:"Source Serif 4",Georgia,serif;font-weight:500;line-height:1.08}h1{font-size:clamp(42px,7vw,78px);margin:12px 0}h2{font-size:32px;margin:6px 0 18px}section{border-top:1px solid var(--line);padding:24px 0}select{font:inherit;background:#fff;color:var(--ink);padding:7px 12px;border:1px solid #66796b;border-radius:4px;max-width:100%}label{display:block;margin-bottom:6px;font-weight:600}.table{overflow:auto;margin-top:16px}table{width:100%;border-collapse:collapse;min-width:490px}td,th{padding:10px 8px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}th:first-child,td:first-child{text-align:left}th{font-size:14px}strong.big{font:52px Georgia,serif;color:var(--accent)}small,footer{color:#42594f}.stress{margin:16px 0 4px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}footer{overflow-wrap:anywhere;font-size:13px}.pair{display:flex;align-items:center;gap:12px;margin:6px 0}.barbase{width:min(50vw,350px);background:#dce3d9;height:9px}.bar{background:#946149;height:100%}.pos{background:#307358}select:focus-visible{outline:3px solid #d0822b}</style>
+<header><b>RiskAgent B3</b><span>Pesquisa quantitativa</span></header><main><h1>Painel de risco</h1><p id="when"></p>
+<section><h2>Risco de cauda</h2><label for="asset">Ativo ou carteira</label><select id="asset"></select>
+<div class="table"><table><thead><tr><th>Modelo</th><th>Pregões avaliados</th><th>Perdas além do VaR</th><th>Frequência</th><th>p ajustado do ES</th></tr></thead><tbody id="rows"></tbody></table></div><p><small>VaR de 99%. O teste de Expected Shortfall procura subestimação das perdas de cauda. Um p ajustado abaixo de 0,05 indica evidência nessa direção.</small></p></section>
+<section><h2>Estresse da carteira</h2><label for="scenario">Cenário para PETR4 e VALE3, com pesos de 50% cada</label><select id="scenario"></select>
+<div aria-live="polite"><div class="stress"><strong class="big" id="impact"></strong><span>retorno da carteira</span></div><div id="bars"></div><small id="kind"></small></div></section><footer id="source"></footer></main>
+<script>
+const run=/*RUN_DATA*/;
+const el=id=>document.getElementById(id);
+const num=(v,k)=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:k,maximumFractionDigits:k});
+const fmt=v=>num(v,2)+'%';
+const assets=[...new Set(run.tail.map(r=>r.asset))];
+for(const a of assets)el('asset').add(new Option(a==='PORTFOLIO_50_50'?'Carteira 50/50':a,a));
+if(assets.includes('PETR4'))el('asset').value='PETR4';
+function table(){el('rows').replaceChildren();for(const r of run.tail.filter(r=>r.asset===el('asset').value)){
+const tr=el('rows').insertRow();for(const item of [r.model,num(r.n,0),num(r.breaches,0),r.n>0?fmt(100*r.breaches/r.n):'—',r.es_p_lower_holm?num(r.es_p_lower_holm,5):'Indisponível'])tr.insertCell().textContent=item;}}
+run.stress.forEach((r,i)=>el('scenario').add(new Option(r.scenario,i)));
+function stress(){const r=run.stress[Number(el('scenario').value)];el('impact').textContent=fmt(r.portfolio_simple_pct);el('bars').replaceChildren();
+for(const a of ['PETR4','VALE3']){const line=document.createElement('div');line.className='pair';const base=document.createElement('div');base.className='barbase';const bar=document.createElement('div');bar.className='bar'+(r[a]>0?' pos':'');const scale=Math.max(1,...run.stress.flatMap(s=>[Math.abs(s.PETR4),Math.abs(s.VALE3)]));bar.style.width=(100*Math.abs(r[a])/scale)+'%';base.append(bar);line.append(a,base,fmt(r[a]));el('bars').append(line);}
+el('kind').textContent=r.kind==='historico'?'Pregão observado em '+r.date.split('-').reverse().join('/'):'Choque hipotético de um pregão.';}
+el('asset').onchange=table;el('scenario').onchange=stress;table();stress();el('when').textContent='Execução de '+new Date(run.created).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+' (Brasília) · Cobertura '+({partial:'parcial',complete:'completa'}[run.coverage]||'desconhecida');el('source').textContent='Fonte: resultados locais · '+run.run;
+</script></html>

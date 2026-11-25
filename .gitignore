@@ -1,3 +1,5 @@
 .venv/
 data/raw/
 __pycache__/
+outputs/**/runs/*/inputs/
+outputs/painel/
