@@ -59,11 +59,16 @@ def build(runs, output):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sem-abrir", action="store_true")
+    parser.add_argument("--ao-vivo", action="store_true", help="Abre a página com consultas de PETR4 a cada minuto.")
+    parser.add_argument("--porta", type=int, default=8765)
     args = parser.parse_args()
     try:
         path = build(ROOT / "outputs/phase2_1/runs", ROOT / "outputs/painel/index.html")
     except (ValueError, OSError, KeyError) as exc:
         parser.exit(1, f"{exc}\n")
     print(path)
-    if not args.sem_abrir:
+    if args.ao_vivo:
+        from src.live_server import serve
+        serve(path, ROOT / "data/raw/intraday", args.porta, not args.sem_abrir)
+    elif not args.sem_abrir:
         webbrowser.open(path.as_uri())

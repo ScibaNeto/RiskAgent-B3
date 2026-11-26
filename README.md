@@ -96,3 +96,18 @@ node work/didactic.cjs
 ```
 
 A pasta `entregas/outputs` também reúne os relatórios, a imagem da interface e as tabelas de resultados desta entrega.
+## PETR4 durante o pregão
+
+Abra o terminal na raiz do projeto e execute:
+
+```powershell
+.\.venv\Scripts\python.exe painel.py --ao-vivo
+```
+
+O navegador abre o serviço local em http://127.0.0.1:8765/. O parâmetro `--porta` escolhe outra porta. O terminal precisa permanecer aberto; Ctrl+C encerra o serviço. O painel também pode usar o modo histórico já disponível. A página histórica requer os snapshots da execução na máquina.
+
+Enquanto a página ao vivo estiver aberta, ela solicita PETR4 a cada 60 segundos. As abas compartilham a consulta ao provedor. O horário da cotação é o início da última barra encerrada na sessão regular BVMF. Durante o pregão, uma barra com mais de três minutos é sinalizada como atrasada. A disponibilidade e o atraso efetivo dependem do Yahoo Finance. Se o provedor falhar, o serviço conserva a última cotação válida em memória enquanto estiver em execução. Um serviço iniciado sem dados válidos mostra indisponibilidade.
+
+A consulta diária de volume é reaproveitada por 15 minutos. O volume conta ações; a média exige os 20 pregões anteriores completos, sem usar o pregão comparado. O calendário do histórico de risco continua limitado à data do snapshot. A área intradiária identifica separadamente o dia atual em Brasília.
+
+Respostas válidas alteradas ficam compactadas em `data/raw/intraday` com instante UTC e SHA-256. Conteúdo recusado fica na subpasta `quarantine` com motivo, origem e bytes recebidos. A falha de conexão anterior à chegada de conteúdo é registrada no log. As fontes consultadas são as barras de PETR4.SA no endpoint público chart do Yahoo Finance, em intervalos de um minuto e um dia. A consulta é descritiva e não realiza previsões intradiárias.

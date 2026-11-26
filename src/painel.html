@@ -2,6 +2,10 @@
 <style>
 :root{color-scheme:light;--ink:#182d28;--line:#b5c2b5;--accent:#22604b}*{box-sizing:border-box}body{margin:0;background:#f4f4ec;color:var(--ink);font:16px/1.55 "Source Sans 3",system-ui,sans-serif}header{background:#182d28;color:#f4f4ec;padding:15px max(5vw,20px);display:flex;justify-content:space-between;gap:12px}main{max-width:1080px;margin:auto;padding:35px 5vw 45px}h1,h2{font-family:"Source Serif 4",Georgia,serif;font-weight:500;line-height:1.08}h1{font-size:clamp(42px,7vw,78px);margin:12px 0}h2{font-size:32px;margin:6px 0 18px}section{border-top:1px solid var(--line);padding:24px 0}select{font:inherit;background:#fff;color:var(--ink);padding:7px 12px;border:1px solid #66796b;border-radius:4px;max-width:100%}label{display:block;margin-bottom:6px;font-weight:600}.table{overflow:auto;margin-top:16px}table{width:100%;border-collapse:collapse;min-width:490px}td,th{padding:10px 8px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}th:first-child,td:first-child{text-align:left}th{font-size:14px}strong.big{font:52px Georgia,serif;color:var(--accent)}small,footer{color:#42594f}.stress{margin:16px 0 4px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}footer{overflow-wrap:anywhere;font-size:13px}.pair{display:flex;align-items:center;gap:12px;margin:6px 0}.barbase{width:min(50vw,350px);background:#dce3d9;height:9px}.bar{background:#946149;height:100%}.pos{background:#307358}select:focus-visible{outline:3px solid #d0822b}.filters{display:flex;flex-wrap:wrap;gap:20px}.filters input{font:inherit;color:inherit;padding:7px;border:1px solid #66796b;border-radius:4px}canvas{width:100%;height:195px;display:block;background:#fbfbf6}.filters label{font-size:15px}#drawdown{font-weight:700}</style>
 <header><b>RiskAgent B3</b><span>Pesquisa quantitativa</span></header><main><h1>Painel de risco</h1><p id="when"></p>
+<section id="live" hidden><h2>PETR4 durante o pregão</h2><p id="session-live"></p>
+<p><strong class="big" id="live-price">—</strong></p><p id="quote-live" aria-live="polite">Consultando PETR4…</p>
+<p id="bar-volume"></p><h3>Quantas ações trocaram de mãos no último pregão?</h3><p id="daily-volume"></p>
+<small>Fonte: Yahoo Finance. O painel consulta barras de um minuto enquanto esta página está aberta. O horário da barra indica o início do minuto, em Brasília. O fechamento ajustado e o risco diário aparecem abaixo.</small></section>
 <section id="petro"><h2>PETR4 e Ibovespa</h2><p>Desempenho no período · Base 100 no primeiro pregão com os dois preços.</p>
 <div class="filters"><label>Até a data <input id="cut" type="date"></label><label>Janela <select id="span"><option value="63">63 pregões</option><option value="252" selected>252 pregões</option><option value="0">Histórico completo</option></select></label></div>
 <p id="pricesummary"></p><canvas id="performance" role="img" aria-label="Desempenho de PETR4 em verde e Ibovespa em marrom"></canvas>
@@ -47,6 +51,36 @@ el('factor-panel').hidden=!run.factors.length;
 fillRows(el('factor-rows'),run.factors.filter(r=>r.asset==='PETR4').map(r=>[fmt(r.market_shock_pct),fmt(r.fx_shock_pct),fmt(r.portfolio_impact_pct)]));
 coverage();
 el('asset').onchange=()=>{table();coverage();};el('scenario').onchange=stress;table();stress();el('when').textContent='Execução de '+new Date(run.created).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+' (Brasília) · Cobertura '+({partial:'parcial',complete:'completa'}[run.coverage]||'desconhecida');el('source').textContent='Fonte: resultados locais · '+run.run;
+if(location.protocol==='http:' && location.hostname==='127.0.0.1'){
+  const whenBR=s=>new Date(s).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'});
+  const dayBR=s=>s.split('-').reverse().join('/');
+  const count=v=>Number(v).toLocaleString('pt-BR');
+  el('live').hidden=false;
+  let lastQuoteTime='';
+  async function refreshLive(){
+    try{
+      const response=await fetch('/api/petr4',{cache:'no-store'});
+      if(!response.ok) throw Error();
+      const data=await response.json();
+      el('session-live').textContent='Hoje, '+dayBR(data.today)+' · '+data.session;
+      const q=data.quote.value;
+      lastQuoteTime=q?whenBR(q.time):'';
+      const status=data.quote.error?'Provedor indisponível':data.session==='Pregão em andamento' && data.age_seconds>180?'Cotação atrasada':'Última barra disponível';
+      el('live-price').textContent=q?'R$ '+num(q.price,2):'—';
+      el('quote-live').textContent=status+(q?' · Barra de '+whenBR(q.time):' · Sem cotação válida')+' · Consulta em '+whenBR(data.quote.checked);
+      el('bar-volume').textContent=q && q.volume!=null?'Volume naquele minuto: '+count(q.volume)+' ações.':'Volume do minuto indisponível.';
+      const v=data.daily.value;
+      el('daily-volume').textContent=(data.daily.error?'Consulta diária indisponível. ':'')+(v?
+        dayBR(v.date)+' · '+count(v.volume)+' ações. '+(v.mean20==null?'Histórico insuficiente para a média.':'Média dos 20 pregões anteriores: '+count(Math.round(v.mean20))+' ações.')+
+        (v.date!==v.expected_date?' O último pregão encerrado ainda não consta da série.':''):'Volume diário indisponível.');
+    }catch{
+      el('quote-live').textContent='Sem conexão com o serviço local. '+(lastQuoteTime?'Última barra exibida: '+lastQuoteTime+'. ':'')+'Aguardando nova consulta.';
+    }finally{
+      window.setTimeout(refreshLive,60000);
+    }
+  }
+  refreshLive();
+}
 /*PRICE_AVERAGE*/
 /*ASSET_VIEW*/
 </script></html>

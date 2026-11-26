@@ -158,3 +158,7 @@ Parcial. O painel por data e a central didática mostram a média móvel simples
 ## Passagem ao Marco 3 · 25/11/2026
 
 Marco 2 aceito no universo diário demonstrativo. Avançaram os componentes Risco quantitativo, Carteiras, Validação e Painel. Os demais mantêm o estágio registrado. Evidências, limites e reprodução no [aceite do Marco 2](ACEITE_MARCO_2.md). O próximo incremento é o volume negociado na página do ativo.
+
+### Marco 3 em andamento · PETR4 intradiária
+
+Avançaram os componentes 1 (dados), 4 (análise técnica) e 15 (painel). O modo ao vivo apresenta preço e volume da última barra encerrada, horários e atraso, situação do pregão, volume diário e média dos 20 pregões anteriores. Na verificação local de 25/11, o provedor retornou 64.227.800 ações no dia e média anterior de 58.118.015. Os cálculos de risco permanecem diários. Fundamentos, macroeconomia, notícias e regime continuam no escopo do Marco 3.
