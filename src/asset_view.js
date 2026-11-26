@@ -59,11 +59,12 @@ function setupAssetView(history){
   function render(){
     if(!cut.value || !cut.validity.valid){
       el('pricesummary').textContent='Selecione uma data dentro do histórico.';
-      el('riskday').textContent='';el('drawdown').textContent='—';
+      el('average20').textContent='';el('riskday').textContent='';el('drawdown').textContent='—';
       for(const id of ['riskplot','performance'])el(id).width=el(id).width;
       return;
     }
     const past=history.filter(r=>r.date<=cut.value);
+    el('average20').textContent=describeAverage20(past);
     const count=Number(span.value);
     const period=count?past.slice(-count):past;
     const first=period.findIndex(r=>Number.isFinite(r.PETR4)&&Number.isFinite(r.IBOV));

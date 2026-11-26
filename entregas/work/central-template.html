@@ -9,7 +9,7 @@ const modules=[
 ['Dados financeiros','Em uso','Coleta incremental, calendário B3, qualidade e versões históricas.'],
 ['Risco quantitativo','Em uso','VaR, Expected Shortfall, volatilidade, validação e estresse.'],
 ['Previsão de mercado','Planejado','Probabilidades e intervalos calibrados para 1, 5, 20 e 60 pregões.'],
-['Análise técnica','Parcial','Comparação de preços e queda desde o pico disponíveis. RSI, MACD e volume no roteiro.'],
+['Análise técnica','Parcial','Comparação de preços, média de 20 pregões e queda desde o pico disponíveis. RSI, MACD e volume no roteiro.'],
 ['Fundamentos','Planejado','Balanços, margens, endividamento, valuation e comparação setorial.'],
 ['Macroeconomia','Planejado','Selic, inflação, câmbio, commodities e calendário de divulgação.'],
 ['Notícias e sentimento','Planejado','Eventos por empresa, resumos e fontes originais.'],
@@ -42,6 +42,7 @@ function render(){
  $('market').classList.toggle('hidden',!['Mercado','PETR4'].includes(view));$('detail').replaceChildren();
  if(view==='Mercado'||view==='PETR4'){
  $('marketfoot').innerHTML=panel(view==='Mercado'?'Leitura do último pregão':'Risco de PETR4 no pregão',table(['Indicador de PETR4','Resultado'],[['Retorno logarítmico realizado',pct(last.return_pct)],['VaR 99% · GJR-GARCH-t',pct(last.var_pct)],['Queda desde o pico do histórico',pct(last.drawdown)]]));charts();}
+ if(view==='PETR4') $('marketfoot').insertAdjacentHTML('beforeend',panel('Como o preço se compara aos últimos 20 pregões?', '<p>'+describeAverage20(h)+'</p><details><summary>Como a média é calculada?</summary><p>Somamos os últimos 20 fechamentos ajustados e dividimos por 20. Cada pregão tem o mesmo peso, incluindo o último da s?rie.</p></details>'));
  if(view==='Motores')$('detail').innerHTML=panel('Escopo e estágio',modules.map(m=>'<div class="module"><b>'+m[0]+'</b><span class="tag">'+m[1]+'</span><p class="dim">'+m[2]+'</p></div>').join(''));
  if(view==='Risco')$('detail').innerHTML=panel('Modelos para PETR4',table(['Modelo','Pregões','Violações','p do ES¹'],run.tail.filter(r=>r.asset==='PETR4').map(r=>[r.model,r.n,r.breaches,f(r.es_p_lower_holm,5)]))+'<p class="dim">¹ Teste unilateral com correção de Holm. Abaixo de 0,05 há evidência de subestimação da cauda na amostra.</p>');
  if(view==='Carteira'){$('detail').innerHTML=panel('Estresse de um pregão','<p class="dim">PETR4 50% · VALE3 50%</p><p><label for="stress">Cenário</label></p><select id="stress"></select><p class="big" id="loss"></p><small id="type"></small>');run.stress.forEach((r,i)=>$('stress').add(new Option(r.scenario,i)));const show=()=>{const r=run.stress[$('stress').value];$('loss').textContent=pct(r.portfolio_simple_pct);$('type').textContent=r.kind==='historico'?'Histórico · '+dt(r.date):'Hipotético · pesos antes do choque'};$('stress').onchange=show;show();}

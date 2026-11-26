@@ -45,6 +45,7 @@ def build(runs, output):
     if not data["tail"] or not data["stress"]:
         raise ValueError(f"A execução {run.name} tem tabelas vazias.")
     template = (ROOT / "src" / "painel.html").read_text(encoding="utf8")
+    template = template.replace("/*PRICE_AVERAGE*/", (ROOT / "src" / "price_average.js").read_text(encoding="utf8"))
     template = template.replace("/*ASSET_VIEW*/", (ROOT / "src" / "asset_view.js").read_text(encoding="utf8"))
     payload = json.dumps(data, ensure_ascii=True).replace("<", "\\u003c")
     output.parent.mkdir(parents=True, exist_ok=True)

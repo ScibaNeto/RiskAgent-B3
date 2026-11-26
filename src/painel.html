@@ -8,7 +8,7 @@
 <p><b>Queda desde o pico histórico de PETR4</b> · <output id="drawdown"></output></p>
 <h3>Retorno realizado e limite de perda</h3><p>GJR-GARCH-t · VaR de 99% em marrom, retorno diário em verde e violações em vermelho.</p>
 <canvas id="riskplot" role="img" aria-label="Retorno de PETR4, VaR previsto e violações"></canvas>
-<p id="riskday" aria-live="polite"></p><small>Fonte: fechamentos ajustados e backtest da execução local. As datas exibem a reconstrução histórica desta versão dos dados.</small></section>
+<h3>Como o preço se compara ao último m?s de pregões?</h3><p id="average20"></p><p id="riskday" aria-live="polite"></p><small>Fonte: fechamentos ajustados e backtest da execução local. As datas exibem a reconstrução histórica desta versão dos dados.</small></section>
 <section><h2>Risco de cauda</h2><label for="asset">Ativo ou carteira</label><select id="asset"></select>
 <div class="table"><table><thead><tr><th>Modelo</th><th>Pregões avaliados</th><th>Perdas além do VaR</th><th>Frequência</th><th>p ajustado do ES</th></tr></thead><tbody id="rows"></tbody></table></div><p><small>VaR de 99%. O teste de Expected Shortfall procura subestimação das perdas de cauda. Um p ajustado abaixo de 0,05 indica evidência nessa direção.</small></p></section>
 <section><h2>Estresse da carteira</h2><label for="scenario">Cenário para PETR4 e VALE3, com pesos de 50% cada</label><select id="scenario"></select>
@@ -28,5 +28,6 @@ function stress(){const r=run.stress[Number(el('scenario').value)];el('impact').
 for(const a of ['PETR4','VALE3']){const line=document.createElement('div');line.className='pair';const base=document.createElement('div');base.className='barbase';const bar=document.createElement('div');bar.className='bar'+(r[a]>0?' pos':'');const scale=Math.max(1,...run.stress.flatMap(s=>[Math.abs(s.PETR4),Math.abs(s.VALE3)]));bar.style.width=(100*Math.abs(r[a])/scale)+'%';base.append(bar);line.append(a,base,fmt(r[a]));el('bars').append(line);}
 el('kind').textContent=r.kind==='historico'?'Pregão observado em '+r.date.split('-').reverse().join('/'):'Choque hipotético de um pregão.';}
 el('asset').onchange=table;el('scenario').onchange=stress;table();stress();el('when').textContent='Execução de '+new Date(run.created).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+' (Brasília) · Cobertura '+({partial:'parcial',complete:'completa'}[run.coverage]||'desconhecida');el('source').textContent='Fonte: resultados locais · '+run.run;
+/*PRICE_AVERAGE*/
 /*ASSET_VIEW*/
 </script></html>

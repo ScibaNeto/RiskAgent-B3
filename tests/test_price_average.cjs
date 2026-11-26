@@ -1,0 +1,10 @@
+﻿const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const {priceAverage20} = vm.runInNewContext(fs.readFileSync(require.resolve('../src/price_average.js'), 'utf8') + '\n;({priceAverage20})');
+const series = Array.from({length: 21}, (_, i) => ({PETR4: i + 1}));
+assert.equal(priceAverage20(series.slice(0, 19)), null);
+assert.equal(priceAverage20(series.slice(0, 20)), 10.5);
+assert.equal(priceAverage20(series), 11.5);
+series[5].PETR4 = null;
+assert.equal(priceAverage20(series), null);

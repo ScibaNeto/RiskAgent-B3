@@ -150,3 +150,7 @@ A proposta é manter uma aplicação Python modular no mesmo repositório. Os sc
 4. **Fontes e abrangência.** A verificação desta auditoria utilizou os arquivos locais. A disponibilidade de versões históricas para preços, macro, notícias e demonstrativos deve ser demonstrada fonte a fonte. Ampliar o universo exige identificar papéis que saíram do mercado e preservar sua composição em cada data.
 
 O primeiro resultado visível depois da fundação deve ser uma ficha de PETR4 que mostre a data da análise, os preços utilizados, o risco estimado, o resultado realizado e a origem de cada número. Esse mesmo registro poderá alimentar o Risk Center e responder a uma pergunta do Copilot.
+
+### Componente 4 · Análise técnica de PETR4
+
+Parcial. O painel por data e a central didática mostram a média móvel simples de 20 fechamentos ajustados. A janela termina no pregão consultado e exige 20 valores válidos consecutivos. O indicador usa a versão do histórico carregada pelo painel. RSI, MACD e volume seguem pendentes.

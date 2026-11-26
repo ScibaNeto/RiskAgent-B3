@@ -33,4 +33,6 @@ try{if(localStorage.getItem('riskagent-reading')==='technical') $('reading').val
 $('reading').onchange=()=>{try{localStorage.setItem('riskagent-reading',$('reading').value)}catch{}render()};
 render();
 </script></html>`);
+const priceAverage = fs.readFileSync(require.resolve('../../src/price_average.js'), 'utf8');
+page = page.replace('<script>const run=', () => '<script>' + priceAverage + '\nconst run=');
 fs.writeFileSync('outputs/Central-RiskAgent.html',page);
