@@ -166,3 +166,13 @@ Avançaram os componentes 1 (dados), 4 (análise técnica) e 15 (painel). O modo
 ## Passagem ao Marco 4 · 25/11/2026
 
 Marco 3 aceito para a primeira integração de PETR4 e contexto brasileiro. No roteiro de 15 componentes avançaram os componentes 1 (dados), 4 (técnica), 5 (fundamentos), 6 (macro), 7 (notícias), 10 (regime), 14 (validação) e 15 (aplicação). As expansões e os demais componentes mantêm seus estados. [Critérios, resultados, limites e reprodução](ACEITE_MARCO_3.md).
+
+## Marco 4 em andamento · Primeira previsão de direção
+
+O experimento da execução `run_20261126T011339_584948Z` estima a probabilidade de o fechamento ajustado de PETR4 subir entre dois pregões BVMF consecutivos. Usa retornos de PETR4 e Ibovespa de um dia, retorno acumulado da ação em cinco dias e desvio amostral dos últimos 20 retornos. As variáveis usam log-retornos. O alvo é excluído se faltar qualquer um dos dois fechamentos. A taxa básica de comparação é a proporção de altas cujos desfechos já eram conhecidos antes do bloco de teste.
+
+A regressão logística usa padronização ajustada no treino e penalização L2 unitária. A cada ano, o treino cresce; as últimas 252 observações elegíveis anteriores ao teste calibram a probabilidade por uma segunda regressão logística. Cortes estritos pelas datas de realização evitam sobreposição entre treino, calibração e teste. O painel informa as datas efetivas de cada bloco. O último alvo avaliado ocorreu em 24/11/2026.
+
+Na reconstrução retrospectiva de 1.468 previsões, Brier 0,24998 e log loss 0,69313 para o modelo; Brier 0,24984 e log loss 0,69283 para a frequência histórica. A referência teve menor erro em ambas. O modelo permanece experimental. O arquivo `entregas/outputs/Previsoes-PETR4-1-pregao.csv` guarda cada data de origem, data do alvo, resultado e duas probabilidades. As frequências observadas por faixa aparecem no painel. O histórico ajustado pertence à versão do snapshot e pode incorporar revisões posteriores às datas avaliadas. Os resultados são retrospectivos e não constituem evidência prospectiva.
+
+Avançaram Previsão de Mercado, Validação e Painel. Permanecem os horizontes de 5, 20 e 60 pregões, avaliação de retornos e quantis e o registro prospectivo antes do resultado.

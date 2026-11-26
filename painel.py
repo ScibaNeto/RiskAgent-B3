@@ -4,7 +4,7 @@ import csv
 import json
 import webbrowser
 from datetime import datetime, timezone
-from src import market_context
+from src import market_context, prediction
 from pathlib import Path
 
 import pandas as pd
@@ -48,6 +48,10 @@ def build(runs, output):
     data["context"] = {source: market_context.history(market_context.STORE, source, cutoff)
                        for source in market_context.PARSERS}
     data["technical"] = market_context.technical(data["history"])
+    try:
+        data["prediction"] = prediction.evaluate(data["history"])
+    except ValueError as exc:
+        data["prediction"] = {"error": str(exc)}
     data["regime"] = market_context.market_regime(data["history"])
     for key, filename in (("levels", "phase2_2_coverage.csv"), ("factors", "phase2_3_factors.csv")):
         source = run / filename

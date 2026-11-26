@@ -6,6 +6,7 @@
 <p><strong class="big" id="live-price">—</strong></p><p id="quote-live" aria-live="polite">Consultando PETR4…</p>
 <p id="bar-volume"></p><h3>Quantas ações trocaram de mãos no último pregão?</h3><p id="daily-volume"></p>
 <small>Fonte: Yahoo Finance. O painel consulta barras de um minuto enquanto esta página está aberta. O horário da barra indica o início do minuto, em Brasília. O fechamento ajustado e o risco diário aparecem abaixo.</small></section>
+<section><h2>O modelo reconheceu altas de PETR4?</h2><p>Experimento histórico. Após cada fechamento, o modelo estima a probabilidade de o preço ajustado subir no próximo pregão. Um fechamento igual conta como ausência de alta.</p><p id="pred-summary"></p><details id="pred-details"><summary>Ver pontuações, datas e calibração</summary><pre id="pred-results" style="white-space:pre-wrap"></pre></details></section>
 <section id="context"><h2>O que ajuda a entender este pregão?</h2>
 <p>Compare as datas. O balanço reúne vários meses, os juros têm data de referência e o índice muda a cada pregão. Este quadro mostra a versão disponível quando o painel foi gerado.</p>
 <h3>Quanto a Petrobras faturou e lucrou?</h3><p id="ctx-cvm"></p>
@@ -115,6 +116,21 @@ for(const key of ['cvm','bcb','ipca','usd','ibge']){
 }
 const tech=run.technical;
 el('ctx-technical').textContent=tech?'Até '+localDate(tech.date)+', o RSI de 14 pregões marcou '+num(tech.rsi,1)+' de 100. Acima de 50, os ganhos recentes pesaram mais; abaixo, as perdas. O MACD, diferença entre as médias exponenciais de 12 e 26 pregões, foi R$ '+num(tech.macd,2)+' (linha de sinal: R$ '+num(tech.signal,2)+').':'Dados consecutivos insuficientes para os indicadores.';
+const experiment=run.prediction;
+if(experiment && !experiment.error){
+  const e=experiment;
+  const better=e.model.brier<e.baseline.brier && e.model.log_loss<e.baseline.log_loss;
+  el('pred-summary').textContent='Em '+e.n+' pregões de teste, '+(better?'o modelo teve erro menor nas duas medidas.':'o modelo não superou a referência nas duas medidas.')+' A referência usa a frequência de altas conhecida antes de cada bloco anual. O resultado descreve esta amostra.';
+  const score=r=>'Brier '+num(r.brier,5)+' · log loss '+num(r.log_loss,5);
+  const detail=['Valores menores indicam probabilidades mais próximas do resultado observado.','Modelo: '+score(e.model),'Referência: '+score(e.baseline)];
+  for(const fold of e.folds)detail.push('Treino: '+fold.train_from+' a '+fold.train_to+' | Calibração: '+fold.cal_from+' a '+fold.cal_to+' | Teste: '+fold.test_from+' a '+fold.test_to+' ('+fold.n+' pregões)');
+  detail.push('Calibração no teste: probabilidade média estimada → frequência de alta observada');
+  for(const [key,label] of [['model','Modelo'],['baseline','Referência']])for(const b of e.calibration[key])detail.push(label+' · '+num(100*b.mean,1)+'% → '+num(100*b.observed,1)+'% ('+b.n+' pregões)');
+  el('pred-results').textContent=detail.join('\n');
+}else{
+  el('pred-summary').textContent=experiment?.error||'Histórico insuficiente para avaliar o modelo.';
+  el('pred-details').hidden=true;
+}
 const regime=run.regime;
 el('ctx-regime').textContent=regime?'Até '+localDate(regime.date)+', o índice teve variação de '+fmt(regime.change)+' em 20 pregões ('+regime.direction+'). A volatilidade, medida da oscilação dos retornos, foi '+fmt(regime.volatility)+' ao ano. Ficou '+regime.variability+' em relação aos 60 pregões anteriores ('+fmt(regime.reference)+').':'Histórico insuficiente para classificar o período.';
 /*PRICE_AVERAGE*/
