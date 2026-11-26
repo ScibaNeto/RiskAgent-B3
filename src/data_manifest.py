@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 
-def _file_sha256(path: Path) -> str | None:
+def file_sha256(path: Path) -> str | None:
     if not path.is_file():
         return None
     digest = hashlib.sha256()
@@ -70,7 +70,7 @@ def write_data_manifest(
             and ordered
             and nonfinite_returns == 0
         )
-        actual_hash = _file_sha256(price_file)
+        actual_hash = file_sha256(price_file)
         if "sha256" in record and actual_hash != record["sha256"]:
             raise ValueError(f"Snapshot divergente para {asset}.")
         asset_records.append({
@@ -103,7 +103,7 @@ def write_data_manifest(
     manifest = {
         "schema_version": 2,
         "python_version": sys.version.split()[0],
-        "source_sha256": {p.name: _file_sha256(p) for p in sorted(Path(__file__).parent.glob("*.py"))},
+        "source_sha256": {p.name: file_sha256(p) for p in sorted(Path(__file__).parent.glob("*.py"))},
         "run_id": run_id,
         "coverage_status": (
             "partial" if any(r["quality"].get("coverage_status") == "partial" for r in asset_records)

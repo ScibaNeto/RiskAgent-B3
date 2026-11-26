@@ -165,11 +165,21 @@ class IngestionTests(unittest.TestCase):
         quality = root / "data_quality.json"
         assets = {a: {"last_completed_session":"2026-11-23", "stale_sessions":0}
                   for a in ("PETR4", "VALE3", "IBOV")}
+        for asset, record in assets.items():
+            snapshot = root / f"{asset}.csv"
+            snapshot.write_bytes(self.original)
+            record.update(snapshot=snapshot.name, sha256=hashlib.sha256(self.original).hexdigest())
         quality.write_text(json.dumps({"assets":assets}))
         self.assertFalse(already_current(root.parent, "2026-11-23"))
         (root / "phase2_report.md").touch()
         self.assertTrue(already_current(root.parent, "2026-11-23"))
         self.assertFalse(already_current(root.parent, "2026-11-24"))
+        snapshot = root / "PETR4.csv"
+        snapshot.unlink()
+        self.assertFalse(already_current(root.parent, "2026-11-23"))
+        snapshot.write_bytes(self.original + b"changed")
+        self.assertFalse(already_current(root.parent, "2026-11-23"))
+        snapshot.write_bytes(self.original)
         assets["PETR4"]["stale_sessions"] = 1
         quality.write_text(json.dumps({"assets":assets}))
         self.assertFalse(already_current(root.parent, "2026-11-23"))

@@ -11,8 +11,10 @@ import pandas as pd
 from filelock import FileLock
 
 if __package__:
+    from .data_manifest import file_sha256
     from .b3_sessions import completed_sessions
 else:
+    from data_manifest import file_sha256
     from b3_sessions import completed_sessions
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,10 +24,23 @@ def already_current(runs: Path, session: str) -> bool:
     for quality in sorted(runs.glob("*/data_quality.json"), reverse=True):
         if not (quality.parent / "phase2_report.md").is_file():
             continue
-        data = json.loads(quality.read_text("utf-8"))
-        assets = data["assets"]
-        return set(assets) == {"PETR4", "VALE3", "IBOV"} and all(record["last_completed_session"] == session
-                                    and record["stale_sessions"] == 0 for record in assets.values())
+        root = quality.parent.resolve()
+        try:
+            records = json.loads(quality.read_text("utf-8"))["assets"]
+            if set(records) != {"PETR4", "VALE3", "IBOV"}:
+                return False
+            for record in records.values():
+                if record["last_completed_session"] != session or record["stale_sessions"] != 0:
+                    return False
+                snapshot = (root / record["snapshot"]).resolve()
+                if not snapshot.is_relative_to(root) or not snapshot.is_file():
+                    return False
+                if file_sha256(snapshot) != record["sha256"]:
+                    return False
+        except (OSError, KeyError, TypeError, ValueError) as exc:
+            logging.warning("Relatório de qualidade inutilizável em %s: %s", root, exc)
+            return False
+        return True
     return False
 
 

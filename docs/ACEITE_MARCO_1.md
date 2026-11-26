@@ -66,3 +66,11 @@ A Fase 2 registrou 640 de 640 ajustes GJR convergentes. O primeiro teste novo de
 | 15. Dashboard & Application | Planejado. Relatórios locais de qualidade, risco e cenários já podem alimentar o futuro Risk Center. |
 
 **Próxima decisão de engenharia:** concentrar o próximo incremento na validade estatística da Fase 2.2 e nos cenários da Fase 2.3. Reabrir a base diária para um defeito reproduzível ou para uma necessidade concreta de um novo motor.
+
+### Revalidação para a passagem ao Marco 2 · 25/11/2026
+
+Marco 1 encerrado para os três instrumentos previstos. Uma execução arquivada podia parecer atual após copiar apenas os relatórios, mesmo com os CSVs de entrada ausentes. O atualizador diário agora verifica a presença e o SHA-256 dos três snapshots antes de dispensar a coleta. O teste específico simula exclusão e alteração de bytes. Os snapshots ficam no arquivo local de execuções.
+
+Na revalidação offline, as consultas PETR4 às 02h14 e 14h25 de Brasília reproduziram respectivamente R$ 41,30 de 23/11 e R$ 40,55 de 24/11. As duas execuções offline listadas acima conservaram seis entradas verificáveis, 4.183 datas comuns e igualdade byte a byte entre os pares de arquivos de previsões, métricas, cauda e estresse. Passaram 65 testes Python, o teste do indicador em JavaScript, a compilação e a verificação das dependências.
+
+A próxima etapa ativa é o Marco 2, consolidação do Risk Engine. A página técnica já contém uma entrega parcial do Marco 3. Para acompanhar a primeira integração dos sinais, o Marco 6 é o scanner de oportunidades. Os Marcos 7 a 10 completam as integrações do Copilot, da aplicação e da operação.
