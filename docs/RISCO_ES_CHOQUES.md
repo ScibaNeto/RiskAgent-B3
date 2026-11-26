@@ -38,3 +38,11 @@ O cálculo soma os retornos simples ponderados pelos pesos antes do choque. Os t
 - 64 testes passaram. Os três novos casos verificam o estimador HAC contra uma matriz Bartlett calculada à mão com uma lacuna, a direção do teste e a insuficiência de violações, e o retorno de choques conjuntos com pesos desiguais. A compilação passou. Os 640 ajustes GJR registraram convergência.
 - Implementação em `src/risk_extensions.py`, integração em `src/phase2_risk_engine_v2.py` e testes em `tests/test_risk_extensions.py`. Para repetir a partir da raiz do projeto, executar `.\.venv\Scripts\python.exe src\phase2_risk_engine_v2.py --offline --strict-cache`.
 - No roadmap, avançaram Quantitative Risk, Portfolio Intelligence e Model Validation. A próxima decisão do Marco 2 é definir como EWMA e GJR devem atualizar a variância depois de lacunas e verificar o efeito nos mesmos pregões de avaliação. Também permanecem pendentes os níveis adicionais de VaR e o estresse com fatores macroeconômicos estimados.
+
+### Fase 2.2 · Sensibilidade à primeira observação após lacunas
+
+O motor exporta `phase2_2_gap_sensitivity.csv` em cada nova execução. A comparação arquivada em `entregas/outputs/Risco-apos-lacunas.csv` usa os resultados de `run_20261125T173017_620715Z`. Contam-se os pregões BVMF sem retorno diário observável entre dois retornos válidos. A comparação abrange o primeiro retorno disponível depois da lacuna. Cada linha usa a mesma data e os mesmos parâmetros da previsão original. Os resultados históricos originais continuam como referência.
+
+Para EWMA, substituir o quadrado do choque ausente pela sua esperança condicional mantém a variância. Para GJR com inovação simétrica, cada sessão ausente leva h a omega + (alpha + beta + gamma/2) × h. A coluna de sensibilidade aplica o quantil t à raiz da variância esperada. Essa aproximação isola o efeito da passagem do tempo, sem integrar toda a distribuição de volatilidades ou reestimar o modelo. A alteração de persistência nos dias seguintes ainda não foi avaliada.
+
+Cada modelo apresentou quatro casos avaliáveis (ativo e data) e cinco sem previsão. Em PETR4, em 24/11/2020, o VaR do GJR passou de −6,16% para −6,41% nessa comparação. Alguns ativos compartilham datas e a carteira inclui os mesmos ativos. A evidência é insuficiente para eleger uma política superior.

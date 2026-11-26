@@ -28,11 +28,13 @@ from scipy import stats
 from scipy.special import xlogy
 
 if __package__:
+    from .gap_sensitivity import gap_sensitivity
     from .risk_extensions import write_extensions
     from . import market_data
     from .b3_sessions import daily_log_returns, session_prices
     from .data_manifest import write_data_manifest
 else:
+    from gap_sensitivity import gap_sensitivity
     from risk_extensions import write_extensions
     import market_data
     from b3_sessions import daily_log_returns, session_prices
@@ -898,6 +900,8 @@ def main() -> None:
         phase_comparison.to_csv(OUTPUT_DIR / "phase2_phase1_comparison.csv", index=False, float_format="%.8f")
 
     diagnostics_frame = pd.DataFrame(all_diagnostics)
+    gap_sensitivity(forecasts, diagnostics_frame, ALPHA).to_csv(
+        OUTPUT_DIR / "phase2_2_gap_sensitivity.csv", index=False)
     diagnostics_frame.to_csv(OUTPUT_DIR / "phase2_garch_diagnostics.csv", index=False)
 
     portfolio_table = forecasts[forecasts["asset"] == "PORTFOLIO_50_50"].copy()
