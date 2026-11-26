@@ -162,3 +162,7 @@ Marco 2 aceito no universo diário demonstrativo. Avançaram os componentes Risc
 ### Marco 3 em andamento · PETR4 intradiária
 
 Avançaram os componentes 1 (dados), 4 (análise técnica) e 15 (painel). O modo ao vivo apresenta preço e volume da última barra encerrada, horários e atraso, situação do pregão, volume diário e média dos 20 pregões anteriores. Na verificação local de 25/11, o provedor retornou 64.227.800 ações no dia e média anterior de 58.118.015. Os cálculos de risco permanecem diários. Fundamentos, macroeconomia, notícias e regime continuam no escopo do Marco 3.
+
+## Passagem ao Marco 4 · 25/11/2026
+
+Marco 3 aceito para a primeira integração de PETR4 e contexto brasileiro. No roteiro de 15 componentes avançaram os componentes 1 (dados), 4 (técnica), 5 (fundamentos), 6 (macro), 7 (notícias), 10 (regime), 14 (validação) e 15 (aplicação). As expansões e os demais componentes mantêm seus estados. [Critérios, resultados, limites e reprodução](ACEITE_MARCO_3.md).

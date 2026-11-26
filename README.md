@@ -111,3 +111,6 @@ Enquanto a página ao vivo estiver aberta, ela solicita PETR4 a cada 60 segundos
 A consulta diária de volume é reaproveitada por 15 minutos. O volume conta ações; a média exige os 20 pregões anteriores completos, sem usar o pregão comparado. O calendário do histórico de risco continua limitado à data do snapshot. A área intradiária identifica separadamente o dia atual em Brasília.
 
 Respostas válidas alteradas ficam compactadas em `data/raw/intraday` com instante UTC e SHA-256. Conteúdo recusado fica na subpasta `quarantine` com motivo, origem e bytes recebidos. A falha de conexão anterior à chegada de conteúdo é registrada no log. As fontes consultadas são as barras de PETR4.SA no endpoint público chart do Yahoo Finance, em intervalos de um minuto e um dia. A consulta é descritiva e não realiza previsões intradiárias.
+## Contexto de mercado
+
+Abra "entregas/outputs/Painel-Etapa-3.html" no navegador ou execute o painel em modo ao vivo. A página reúne Petrobras, Selic, IPCA, câmbio, notícias econômicas e regime do Ibovespa. [Fontes, critérios e comandos de atualização](docs/ACEITE_MARCO_3.md).

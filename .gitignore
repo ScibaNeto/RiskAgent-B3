@@ -3,3 +3,5 @@ data/raw/
 __pycache__/
 outputs/**/runs/*/inputs/
 outputs/painel/
+/data/context/.update.lock
+/data/context/raw/

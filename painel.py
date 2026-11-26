@@ -3,6 +3,8 @@ import argparse
 import csv
 import json
 import webbrowser
+from datetime import datetime, timezone
+from src import market_context
 from pathlib import Path
 
 import pandas as pd
@@ -42,6 +44,11 @@ def build(runs, output):
     data = {"run": run.name, "created": manifest["created_at_utc"],
             "tail": read_rows(run / required[1]), "stress": read_rows(run / required[2]),
             "history": asset_history(run, manifest), "coverage": manifest["coverage_status"]}
+    cutoff = datetime.now(timezone.utc)
+    data["context"] = {source: market_context.history(market_context.STORE, source, cutoff)
+                       for source in market_context.PARSERS}
+    data["technical"] = market_context.technical(data["history"])
+    data["regime"] = market_context.market_regime(data["history"])
     for key, filename in (("levels", "phase2_2_coverage.csv"), ("factors", "phase2_3_factors.csv")):
         source = run / filename
         data[key] = read_rows(source) if source.is_file() else []

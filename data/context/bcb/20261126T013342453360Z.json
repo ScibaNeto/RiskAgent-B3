@@ -1,0 +1,1 @@
+{"source": "bcb", "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados?formato=json&dataInicial=16%2F10%2F2026&dataFinal=25%2F11%2F2026", "source_sha256": "f44d430a8a55addba0f98ccc3ea35ffccbcf4113937e97a902b48d69722596a8", "data": {"date": "2026-11-25", "rate": 13.75}, "known": "2026-11-26T01:33:42.453360+00:00"}

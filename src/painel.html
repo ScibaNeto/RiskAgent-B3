@@ -6,6 +6,12 @@
 <p><strong class="big" id="live-price">—</strong></p><p id="quote-live" aria-live="polite">Consultando PETR4…</p>
 <p id="bar-volume"></p><h3>Quantas ações trocaram de mãos no último pregão?</h3><p id="daily-volume"></p>
 <small>Fonte: Yahoo Finance. O painel consulta barras de um minuto enquanto esta página está aberta. O horário da barra indica o início do minuto, em Brasília. O fechamento ajustado e o risco diário aparecem abaixo.</small></section>
+<section id="context"><h2>O que ajuda a entender este pregão?</h2>
+<p>Compare as datas. O balanço reúne vários meses, os juros têm data de referência e o índice muda a cada pregão. Este quadro mostra a versão disponível quando o painel foi gerado.</p>
+<h3>Quanto a Petrobras faturou e lucrou?</h3><p id="ctx-cvm"></p>
+<h3>Qual é a meta da taxa básica de juros?</h3><p id="ctx-bcb"></p><h3>Como estão a inflação e o câmbio?</h3><p id="ctx-ipca"></p><p id="ctx-usd"></p>
+<h3>Quais notícias econômicas foram publicadas?</h3><div id="ctx-ibge"></div>
+<h3>As altas ou as quedas pesaram mais em PETR4?</h3><p id="ctx-technical"></p><h3>Como o Ibovespa se comportou?</h3><p id="ctx-regime"></p></section>
 <section id="petro"><h2>PETR4 e Ibovespa</h2><p>Desempenho no período · Base 100 no primeiro pregão com os dois preços.</p>
 <div class="filters"><label>Até a data <input id="cut" type="date"></label><label>Janela <select id="span"><option value="63">63 pregões</option><option value="252" selected>252 pregões</option><option value="0">Histórico completo</option></select></label></div>
 <p id="pricesummary"></p><canvas id="performance" role="img" aria-label="Desempenho de PETR4 em verde e Ibovespa em marrom"></canvas>
@@ -81,6 +87,36 @@ if(location.protocol==='http:' && location.hostname==='127.0.0.1'){
   }
   refreshLive();
 }
+const localDate=s=>s.split('-').reverse().join('/');
+for(const key of ['cvm','bcb','ipca','usd','ibge']){
+  const box=el('ctx-'+key), {record,failure}=run.context[key];
+  if(!record){box.textContent='Dados indisponíveis para esta fonte.';continue}
+  const d=record.data;
+  if(key==='cvm'){
+    box.textContent='De janeiro a '+localDate(d.period)+', a receita consolidada foi de R$ '+num(d.revenue/1e9,2)+' bilhões e o lucro líquido foi de R$ '+num(d.profit/1e9,2)+' bilhões. A margem foi de '+fmt(d.margin)+', ou seja, a parcela da receita que ficou como lucro. ITR versão '+d.version+', entregue em '+localDate(d.received)+'.';
+  }else if(key==='bcb'){
+    box.textContent='Meta Selic: '+fmt(d.rate)+' ao ano em '+localDate(d.date)+'. Essa taxa serve de referência para o custo do dinheiro na economia.';
+  }else if(key==='ipca'){
+    box.textContent='IPCA: '+fmt(d.rate)+' no mês '+d.date.slice(0,7).split('-').reverse().join('/')+'. Mede a variação dos preços ao consumidor no período.';
+  }else if(key==='usd'){
+    box.textContent='Dólar comercial (venda): R$ '+num(d.rate,4)+' por dólar em '+localDate(d.date)+'.';
+  }else{
+    const list=document.createElement('ul');
+    for(const story of d){
+      const li=document.createElement('li'), link=document.createElement('a');
+      link.href=story.url;link.textContent=story.title;
+      li.append(localDate(story.published.slice(0,10))+' · ',link);list.append(li);
+    }
+    box.append(list);
+  }
+  const source=document.createElement('a');source.href=record.url;source.textContent=({cvm:'CVM · ITR consolidado',bcb:'BCB · SGS 432',ipca:'BCB · SGS 433',usd:'BCB · SGS 1',ibge:'Agência de Notícias do IBGE'})[key];
+  box.append(document.createElement('br'),source,' · Consultado em '+new Date(record.known).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+' (Brasília).');
+  if(failure)box.append(' A última atualização falhou. Exibindo a versão anterior.');
+}
+const tech=run.technical;
+el('ctx-technical').textContent=tech?'Até '+localDate(tech.date)+', o RSI de 14 pregões marcou '+num(tech.rsi,1)+' de 100. Acima de 50, os ganhos recentes pesaram mais; abaixo, as perdas. O MACD, diferença entre as médias exponenciais de 12 e 26 pregões, foi R$ '+num(tech.macd,2)+' (linha de sinal: R$ '+num(tech.signal,2)+').':'Dados consecutivos insuficientes para os indicadores.';
+const regime=run.regime;
+el('ctx-regime').textContent=regime?'Até '+localDate(regime.date)+', o índice teve variação de '+fmt(regime.change)+' em 20 pregões ('+regime.direction+'). A volatilidade, medida da oscilação dos retornos, foi '+fmt(regime.volatility)+' ao ano. Ficou '+regime.variability+' em relação aos 60 pregões anteriores ('+fmt(regime.reference)+').':'Histórico insuficiente para classificar o período.';
 /*PRICE_AVERAGE*/
 /*ASSET_VIEW*/
 </script></html>

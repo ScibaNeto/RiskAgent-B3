@@ -51,6 +51,11 @@ def update() -> None:
         now = pd.Timestamp.now(tz="UTC")
         start = (now - pd.Timedelta(days=30)).strftime("%Y-%m-%d")
         session = str(completed_sessions(start, now)[-1].date())
+        if __package__:
+            from .market_context import refresh
+        else:
+            from market_context import refresh
+        refresh()
         if already_current(runs, session):
             print(f"Pregão {session} já atualizado.", flush=True)
             return
