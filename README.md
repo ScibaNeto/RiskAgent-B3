@@ -85,3 +85,14 @@ Na Fase 2.1, p-valores fora da amostra completos sao a familia confirmatoria: ca
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
+
+## Central didática
+
+Abra `entregas/outputs/Central-RiskAgent.html` no navegador para explorar a leitura guiada e técnica com o snapshot incluído. O arquivo funciona offline. Para reconstruir a mesma prévia a partir da fonte no VS Code, execute na raiz do projeto:
+
+```powershell
+cd entregas
+node work/didactic.cjs
+```
+
+A pasta `entregas/outputs` também reúne os relatórios, a imagem da interface e as tabelas de resultados desta entrega.

@@ -1,0 +1,7 @@
+scenario,kind,date,PETR4,VALE3,portfolio_simple_pct
+pior pregão comum observado,historico,2020-03-09,-29.697785796379527,-15.198384136495214,-22.44808496643737
+queda isolada de 10% em PETR4,hipotetico,,-10.0,0.0,-5.0
+queda isolada de 10% em VALE3,hipotetico,,0.0,-10.0,-5.0
+queda conjunta de 10%,hipotetico,,-10.0,-10.0,-10.0
+quedas de 20% em PETR4 e 10% em VALE3,hipotetico,,-20.0,-10.0,-15.0
+PETR4 cai 15% e VALE3 sobe 5%,hipotetico,,-15.0,5.0,-5.0

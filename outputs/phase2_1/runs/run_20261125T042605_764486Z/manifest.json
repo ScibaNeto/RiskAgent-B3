@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "run_id": "run_20261125T042605_764486Z",
+  "created_at_utc": "2026-11-25T04:40:13.980175+00:00",
+  "settings": {
+    "alpha": 0.01,
+    "window": 1000,
+    "min_test_obs": 250,
+    "garch_refit_every": 20,
+    "portfolio_weights": {
+      "PETR4": 0.5,
+      "VALE3": 0.5
+    }
+  },
+  "libraries": {
+    "pandas": "3.1.1",
+    "numpy": "2.5.5",
+    "scipy": "1.18.1",
+    "arch": "9.0.0",
+    "yfinance": "1.8.0",
+    "matplotlib": "3.11.2"
+  },
+  "assets": [
+    {
+      "asset": "PETR4",
+      "ticker": "PETR4.SA",
+      "provider": "Yahoo Finance",
+      "source_mode": "cache_fallback_provider_unavailable",
+      "start_date": "2010-01-04",
+      "end_date": "2026-11-23",
+      "price_count": 4196,
+      "return_count": 4195,
+      "collected_at_utc": "2026-11-25T04:26:05.764486+00:00",
+      "last_observation": "2026-11-23",
+      "price_type": "Close ajustado; auto_adjust=True",
+      "adjustment_convention": "Yahoo Finance ajusta Close para eventos corporativos",
+      "local_file": "data\\raw\\PETR4.csv",
+      "sha256": "8d5240fa09474dc7df808d977b5f3cec1075e0d62db66f817500119e47eb5d29",
+      "validation": {
+        "status": "passed",
+        "null_prices": 0,
+        "nonpositive_prices": 0,
+        "duplicate_dates": 0,
+        "dates_ordered": true,
+        "nonfinite_returns": 0,
+        "returns_abs_over_15pct": 9
+      }
+    },
+    {
+      "asset": "VALE3",
+      "ticker": "VALE3.SA",
+      "provider": "Yahoo Finance",
+      "source_mode": "cache_fallback_provider_unavailable",
+      "start_date": "2010-01-04",
+      "end_date": "2026-11-24",
+      "price_count": 4197,
+      "return_count": 4196,
+      "collected_at_utc": "2026-11-25T04:26:05.764486+00:00",
+      "last_observation": "2026-11-24",
+      "price_type": "Close ajustado; auto_adjust=True",
+      "adjustment_convention": "Yahoo Finance ajusta Close para eventos corporativos",
+      "local_file": "data\\raw\\VALE3.csv",
+      "sha256": "e366daf23b18b8d2182048f1ee17cf1c6daea8c065c485c66105ffd282755fa6",
+      "validation": {
+        "status": "passed",
+        "null_prices": 0,
+        "nonpositive_prices": 0,
+        "duplicate_dates": 0,
+        "dates_ordered": true,
+        "nonfinite_returns": 0,
+        "returns_abs_over_15pct": 5
+      }
+    },
+    {
+      "asset": "IBOV",
+      "ticker": "^BVSP",
+      "provider": "Yahoo Finance",
+      "source_mode": "cache_fallback_provider_unavailable",
+      "start_date": "2010-01-04",
+      "end_date": "2026-11-24",
+      "price_count": 4188,
+      "return_count": 4187,
+      "collected_at_utc": "2026-11-25T04:26:05.764486+00:00",
+      "last_observation": "2026-11-24",
+      "price_type": "Close ajustado; auto_adjust=True",
+      "adjustment_convention": "Yahoo Finance ajusta Close para eventos corporativos",
+      "local_file": "data\\raw\\IBOV.csv",
+      "sha256": "a18ce01118ba0f2b3927e35a396f7eafa80beff97523a83448e032906b1ee9f7",
+      "validation": {
+        "status": "passed",
+        "null_prices": 0,
+        "nonpositive_prices": 0,
+        "duplicate_dates": 0,
+        "dates_ordered": true,
+        "nonfinite_returns": 0,
+        "returns_abs_over_15pct": 1
+      }
+    }
+  ]
+}

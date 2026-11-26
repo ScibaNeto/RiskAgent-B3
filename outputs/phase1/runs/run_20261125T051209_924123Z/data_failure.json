@@ -1,0 +1,24 @@
+{
+  "calendar": "BVMF",
+  "as_of_utc": "2026-11-25T05:12:09.924123+00:00",
+  "last_completed_session": "2026-11-24",
+  "max_stale_sessions": 0,
+  "strict": true,
+  "offline": true,
+  "collected_at_utc": null,
+  "provider_attempts": [],
+  "asset": "PETR4",
+  "cache_checks": {
+    "rows": 4196,
+    "invalid_or_intraday_dates": 0,
+    "future_dates": 0,
+    "null_or_nonfinite_prices": 0,
+    "nonpositive_prices": 0,
+    "duplicate_dates": 0,
+    "out_of_order": false,
+    "invalid_rows": 0
+  },
+  "status": "interrupted",
+  "source_mode": "cache_offline",
+  "reason": "Modo estrito: PETR4 está 1 pregão(ões) em atraso; limite 0."
+}

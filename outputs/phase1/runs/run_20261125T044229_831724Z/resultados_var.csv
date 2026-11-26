@@ -1,0 +1,10 @@
+ativo,modelo,n_obs,violações,esperadas,taxa_%,var_médio_%,p_valor_kupiec,veredito
+PETR4,Simulação histórica,3195,48,31.9,1.5,-8.19,0.008,❌ rejeitado
+PETR4,EWMA (normal),3195,59,31.9,1.85,-6.05,0.0,❌ rejeitado
+PETR4,GJR-GARCH-t,3195,38,31.9,1.19,-6.91,0.296,✅ calibrado
+VALE3,Simulação histórica,3196,41,32.0,1.28,-6.29,0.124,✅ calibrado
+VALE3,EWMA (normal),3196,49,32.0,1.53,-5.39,0.005,❌ rejeitado
+VALE3,GJR-GARCH-t,3196,29,32.0,0.91,-5.91,0.593,✅ calibrado
+IBOV,Simulação histórica,3187,35,31.9,1.1,-3.75,0.583,✅ calibrado
+IBOV,EWMA (normal),3187,50,31.9,1.57,-3.11,0.003,❌ rejeitado
+IBOV,GJR-GARCH-t,3187,35,31.9,1.1,-3.27,0.583,✅ calibrado

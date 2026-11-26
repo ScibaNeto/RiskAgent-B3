@@ -1,0 +1,169 @@
+{
+  "run_id": "run_20261125T172441_564902Z",
+  "common_return_dates": 4183,
+  "first_common": "2010-01-05",
+  "last_common": "2026-11-24",
+  "assets": {
+    "PETR4": {
+      "calendar": "BVMF",
+      "as_of_utc": "2026-11-25T17:24:41.564902+00:00",
+      "last_completed_session": "2026-11-24",
+      "max_stale_sessions": 1,
+      "strict": true,
+      "offline": true,
+      "collected_at_utc": null,
+      "provider_attempts": [],
+      "asset": "PETR4",
+      "quarantine": [],
+      "provider": "Yahoo Finance",
+      "requested_symbol": "PETR4.SA",
+      "cache_checks": {
+        "rows": 4197,
+        "invalid_or_intraday_dates": 0,
+        "future_dates": 0,
+        "null_or_nonfinite_prices": 0,
+        "nonpositive_prices": 0,
+        "duplicate_dates": 0,
+        "out_of_order": false,
+        "invalid_rows": 0
+      },
+      "provider_status": "sem_consulta",
+      "coverage_status": "partial",
+      "freshness": "atualizado",
+      "completeness": "incompleto",
+      "stale_sessions": 0,
+      "missing_sessions": [
+        "2012-02-22",
+        "2020-11-20"
+      ],
+      "excluded_dates": [
+        "2017-06-15",
+        "2017-09-07",
+        "2017-10-12",
+        "2017-11-02",
+        "2017-11-15",
+        "2017-11-20",
+        "2017-12-25",
+        "2017-12-29",
+        "2018-01-25"
+      ],
+      "missing_before_first_price": 0,
+      "extreme_return_dates": [
+        "2016-03-03",
+        "2017-05-18",
+        "2018-05-28",
+        "2018-06-01",
+        "2020-03-09",
+        "2020-03-12",
+        "2020-03-13",
+        "2020-03-16",
+        "2021-02-22"
+      ],
+      "source_mode": "cache_offline",
+      "sha256": "1ad25362570eb0f288895048da53f7d370c57bcfdac25e802a78b76e26b58341",
+      "snapshot": "inputs/PETR4.csv",
+      "outside_common": 2
+    },
+    "VALE3": {
+      "calendar": "BVMF",
+      "as_of_utc": "2026-11-25T17:24:41.564902+00:00",
+      "last_completed_session": "2026-11-24",
+      "max_stale_sessions": 1,
+      "strict": true,
+      "offline": true,
+      "collected_at_utc": null,
+      "provider_attempts": [],
+      "asset": "VALE3",
+      "quarantine": [],
+      "provider": "Yahoo Finance",
+      "requested_symbol": "VALE3.SA",
+      "cache_checks": {
+        "rows": 4197,
+        "invalid_or_intraday_dates": 0,
+        "future_dates": 0,
+        "null_or_nonfinite_prices": 0,
+        "nonpositive_prices": 0,
+        "duplicate_dates": 0,
+        "out_of_order": false,
+        "invalid_rows": 0
+      },
+      "provider_status": "sem_consulta",
+      "coverage_status": "partial",
+      "freshness": "atualizado",
+      "completeness": "incompleto",
+      "stale_sessions": 0,
+      "missing_sessions": [
+        "2012-02-22",
+        "2020-11-20"
+      ],
+      "excluded_dates": [
+        "2017-06-15",
+        "2017-09-07",
+        "2017-10-12",
+        "2017-11-02",
+        "2017-11-15",
+        "2017-11-20",
+        "2017-12-25",
+        "2017-12-29",
+        "2018-01-25"
+      ],
+      "missing_before_first_price": 0,
+      "extreme_return_dates": [
+        "2016-03-08",
+        "2019-01-28",
+        "2020-03-09",
+        "2020-03-10",
+        "2020-03-13"
+      ],
+      "source_mode": "cache_offline",
+      "sha256": "037d375ed377074ff51fb452f6af440d370e7ed8f74b1e25bc07654c7c878f99",
+      "snapshot": "inputs/VALE3.csv",
+      "outside_common": 2
+    },
+    "IBOV": {
+      "calendar": "BVMF",
+      "as_of_utc": "2026-11-25T17:24:41.564902+00:00",
+      "last_completed_session": "2026-11-24",
+      "max_stale_sessions": 1,
+      "strict": true,
+      "offline": true,
+      "collected_at_utc": null,
+      "provider_attempts": [],
+      "asset": "IBOV",
+      "quarantine": [],
+      "provider": "Yahoo Finance",
+      "requested_symbol": "^BVSP",
+      "cache_checks": {
+        "rows": 4188,
+        "invalid_or_intraday_dates": 0,
+        "future_dates": 0,
+        "null_or_nonfinite_prices": 0,
+        "nonpositive_prices": 0,
+        "duplicate_dates": 0,
+        "out_of_order": false,
+        "invalid_rows": 0
+      },
+      "provider_status": "sem_consulta",
+      "coverage_status": "partial",
+      "freshness": "atualizado",
+      "completeness": "incompleto",
+      "stale_sessions": 0,
+      "missing_sessions": [
+        "2012-01-02",
+        "2012-02-22",
+        "2020-11-20"
+      ],
+      "excluded_dates": [
+        "2017-12-29"
+      ],
+      "missing_before_first_price": 0,
+      "extreme_return_dates": [
+        "2020-03-12"
+      ],
+      "source_mode": "cache_offline",
+      "sha256": "f8a9e9eb58439e29e252955fa1147531a54ec0247bfba90cb45543ed49a5bbb7",
+      "snapshot": "inputs/IBOV.csv",
+      "outside_common": 0
+    }
+  }
+}

@@ -1,0 +1,1349 @@
+diff --git a/.gitignore b/.gitignore
+index 3edf9e7..0f8b4ed 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,3 +1,4 @@
+ .venv/
+ data/raw/
+ __pycache__/
++outputs/**/runs/*/inputs/
+diff --git a/README.md b/README.md
+index 149f0ab..edd3aae 100644
+--- a/README.md
++++ b/README.md
+@@ -26,7 +26,7 @@ requirements.txt             dependencias Python
+ 
+ ## Dependencias e instalacao
+ 
+-Requer Python 3.11 ou superior. As dependencias estao em `requirements.txt`: pandas, numpy, scipy, matplotlib, arch e yfinance. Os testes usam `unittest`, incluido no Python.
++Requer Python 3.11 ou superior. As dependencias estao em `requirements.txt`: pandas, numpy, scipy, matplotlib, arch, yfinance, exchange-calendars e filelock. Os testes usam `unittest`, incluido no Python.
+ 
+ No PowerShell, a partir da raiz do repositorio:
+ 
+@@ -42,13 +42,17 @@ py -3 -m venv .venv
+ .\.venv\Scripts\python.exe src\phase2_risk_engine_v2.py
+ ```
+ 
+-Os scripts atualizam incrementalmente `data/raw/`, com cinco dias de sobreposicao para incorporar revisoes. Se o provedor estiver indisponivel, usam um cache valido e informam a data mais recente e sua idade. Por padrao, cache antigo gera aviso; passe `--strict-cache` para interromper quando os dados tiverem mais de sete dias:
++As duas fases compartilham a coleta incremental do fechamento ajustado, com cinco dias corridos de sobreposição. Uma revisão no primeiro pregão coincidente exige nova coleta de todo o histórico para evitar combinar bases de ajuste diferentes. A gravação do CSV usa substituição atômica após a validação da amostra. Em caso de falha, a execução registra o motivo e tenta usar o último cache válido.
++
++O calendário BVMF define quais pregões já encerraram no instante de corte. O limite padrão é um pregão em atraso. Em modo normal, ultrapassar esse limite gera aviso. Com `--strict-cache`, a execução é interrompida. Use `--max-stale-sessions 0` para exigir a última sessão encerrada e `--offline` para trabalhar apenas com os arquivos locais.
+ 
+ ```powershell
+-.\.venv\Scripts\python.exe src\var_baseline.py --strict-cache
+-.\.venv\Scripts\python.exe src\phase2_risk_engine_v2.py --strict-cache
++.\.venv\Scripts\python.exe src\var_baseline.py --offline --strict-cache
++.\.venv\Scripts\python.exe src\phase2_risk_engine_v2.py --offline --strict-cache
+ ```
+ 
++Uma lacuna interna elimina os retornos que precisam daquele fechamento. Os preços extremos continuam na amostra e aparecem na auditoria. A carteira usa apenas datas com retorno diário válido para todos os ativos incluídos na carteira.
++
+ ## Resultados
+ 
+ Cada execucao cria uma pasta nova, sem substituir execucoes anteriores:
+@@ -56,7 +60,7 @@ Cada execucao cria uma pasta nova, sem substituir execucoes anteriores:
+ - Fase 1: `outputs/phase1/runs/<identificador>/`
+ - Fase 2.1: `outputs/phase2_1/runs/<identificador>/`
+ 
+-Os arquivos historicos que ja existem diretamente em `outputs/` e `outputs/phase2_1/` sao preservados. Cada pasta de execucao inclui `manifest.json` com fonte/fallback, datas, contagens, validacao basica, hash SHA-256 dos caches e versoes das bibliotecas. A Fase 1 salva metricas, `garch_diagnostics.csv` e graficos; a Fase 2.1 salva previsoes, metricas, diagnosticos, relatorio e graficos.
++Os arquivos historicos que ja existem diretamente em `outputs/` e `outputs/phase2_1/` sao preservados. Cada execução com entradas aceitas salva em `inputs/` uma cópia local dos bytes usados. O arquivo `manifest.json` registra o SHA-256 da cópia, as versões das bibliotecas, a origem de cada série, o corte temporal e as ocorrências de qualidade. A cobertura parcial identifica pregões faltantes ou atraso. A data de coleta fica nula quando só o cache foi usado. Se a entrada for recusada, o motivo aparece em `data_failure.json`. A Fase 1 salva metricas, `garch_diagnostics.csv` e graficos; a Fase 2.1 salva previsoes, metricas, diagnosticos, relatorio e graficos.
+ 
+ ## Amostra e comparacoes estatisticas
+ 
+diff --git a/docs/MARCO_1_DADOS.md b/docs/MARCO_1_DADOS.md
+new file mode 100644
+index 0000000..1cde33e
+--- /dev/null
++++ b/docs/MARCO_1_DADOS.md
+@@ -0,0 +1,73 @@
++# RiskAgent B3 · Dados de mercado e validação do GJR-GARCH
++
++25 de novembro de 2026 · Revisão local do Marco 1 e primeiro teste de integração do Marco 2
++
++## Resultado
++
++As Fases 1 e 2.1 agora usam a mesma regra para construir retornos diários. Cada retorno exige o fechamento de dois pregões consecutivos. Os dois backtests terminaram com os caches locais. A verificação ao vivo de PETR4, feita sobre uma cópia isolada, recebeu três linhas do Yahoo Finance. O fechamento mais recente disponível nessa consulta continuava sendo o de 23 de novembro.
++
++O GitHub mostrava zero PRs abertos, zero issues abertas e zero execuções de GitHub Actions no repositório, em 25 de novembro. O trabalho foi preparado na branch local `codex/riskagent-marco-0-garch-alignment`, com base em `16d3f6c`. A cópia anterior à intervenção contém o Git, o código, os resultados e os caches locais. A verificação de integridade do ZIP passou. [PRs](https://github.com/ScibaNeto/RiskAgent-B3/pulls) · [Issues](https://github.com/ScibaNeto/RiskAgent-B3/issues) · [Actions](https://github.com/ScibaNeto/RiskAgent-B3/actions)
++
++## O que o calendário mudou
++
++O corte da execução foi a madrugada de 25 de novembro em São Paulo. O último pregão encerrado era 24 de novembro. A comparação usa os mesmos três arquivos brutos da execução anterior. Os hashes SHA-256 conferiram com o backup.
++
++| Série | Último preço | Retornos antes | Retornos agora | Pregões internos sem preço | Datas fora do calendário | Atraso em pregões |
++|---|---|---:|---:|---:|---:|---:|
++| PETR4 | 23/11/2026 | 4.195 | 4.184 | 2 | 9 | 1 |
++| VALE3 | 24/11/2026 | 4.196 | 4.185 | 2 | 9 | 0 |
++| Ibovespa | 24/11/2026 | 4.187 | 4.183 | 3 | 1 | 0 |
++
++Faltaram os fechamentos de **22/02/2012** e **20/11/2020** nas três séries. O Ibovespa também apresentou uma lacuna em **02/01/2012**. A B3 anunciou negociação normal em 20/11/2020 e suspensão em 20/11/2026. O teste automatizado cobre essa diferença histórica. [Comunicado da B3 sobre 2020](https://www.b3.com.br/pt_br/noticias/funcionamento-da-b3-8AE490C97215B74E0172959F18F11323.htm) · [Calendário da B3 para 2026](https://www.b3.com.br/pt_br/noticias/calendario-de-negociacao-da-b3-confira-o-funcionamento-da-bolsa-em-2026.htm)
++
++O cálculo usa `100 × ln(P_t / P_anterior)`, em que o preço anterior corresponde à sessão imediatamente precedente do calendário BVMF. Se faltar um fechamento, o cálculo volta a produzir retornos quando houver novamente dois fechamentos consecutivos. Na carteira com rebalanceamento diário, os retornos simples dos componentes precisam ter a mesma data e o mesmo horizonte. O modelo pondera esses retornos antes de aplicar `100 × ln(1 + retorno_da_carteira)`.
++
++Os retornos logarítmicos diários absolutos acima de 15% ficaram sinalizados. PETR4 teve nove, VALE3 teve cinco e o Ibovespa teve um. Eles continuaram no backtest.
++
++## Efeito sobre o backtest
++
++| Série | Observações fora da amostra antes → agora | Violações do VaR 99% do GJR antes → agora |
++|---|---:|---:|
++| PETR4 | 3.195 → 3.184 | 38 → 39 |
++| VALE3 | 3.196 → 3.185 | 29 → 30 |
++| Ibovespa | 3.187 → 3.183 | 35 → 35 |
++| Carteira 50/50 | 3.195 → 3.184 | 38 → 40 |
++
++Cada violação indica que a perda observada superou a estimada pelo VaR. As datas de entrada e as janelas de estimação mudaram. Uma comparação de capacidade preditiva exigirá uma amostra de avaliação fixada previamente. A Fase 1 registrou convergência em 480 de 480 ajustes GJR, e a Fase 2.1 em 640 de 640.
++
++## Coleta e arquivos
++
++- **Calendário e retornos.** `src/b3_sessions.py` usa a versão 4.13.3 de `exchange-calendars`. O fechamento programado da sessão determina quando o preço do dia se torna elegível.
++- **Coleta e cache.** `src/market_data.py` valida preços, datas, duplicidades, ordem, tamanho da amostra e atualidade. Um lote inválido aciona o fallback. Revisão do primeiro preço coincidente no período de sobreposição exige a releitura integral do histórico. A nova série completa deve cobrir o histórico válido anterior e conferir com o lote que motivou a releitura.
++- **Persistência.** A substituição do CSV é atômica. Um bloqueio de escrita e a comparação da versão lida impedem que uma atualização concorrente sobrescreva a outra. O modo offline lê os arquivos locais. O modo estrito admite por padrão um pregão encerrado de atraso, ajustável com `--max-stale-sessions`.
++- **Rastreabilidade.** Cada execução aceita grava os arquivos de entrada em `inputs/`, com SHA-256, origem, tentativas, lacunas, revisões, extremos e versões em `manifest.json`. A hora de coleta fica desconhecida para caches históricos. O instante da análise fica registrado separadamente. A recusa de uma série gera `data_failure.json` antes da estimação dos modelos.
++- **Integração.** Foram atualizados `src/var_baseline.py`, `src/phase2_risk_engine_v2.py`, `src/data_manifest.py`, o README, as dependências, as regras de exclusão dos snapshots no Git e os testes das duas fases. O script legado da Fase 2, os três CSVs originais e os resultados anteriores foram preservados.
++
++## Verificação
++
++Os **31 testes da versão inicial** passaram antes da alteração. A primeira execução com o novo calendário apontou quatro falhas de asserção e sete erros. As séries de teste continham fins de semana ou feriados, e um teste ainda esperava um retorno atravessando uma lacuna. As séries de negociação passaram a usar pregões, e datas fixas verificam de forma independente a exclusão dos dois retornos afetados por um preço ausente.
++
++A suíte final teve **48 testes aprovados**. Os novos casos cobrem recusa de lote parcialmente inválido, interrupção por atraso, falha de gravação, escrita concorrente, revisão de preços ajustados, preservação dos bytes em fallback, reprodução exata da entrada do modelo e cálculo da carteira com datas faltantes. A compilação de `src` e `tests`, a verificação das dependências com `pip check` e a verificação do diff também passaram. A dependência de calendário emite um aviso de depreciação com pandas 3.1.1.
++
++O teste de integração do GJR usa uma série sintética isolada com semente fixa e 500 observações para estimação. Para as seis seguintes, cada previsão de referência da biblioteca `arch` usa os parâmetros ajustados e a série encerrada no dia anterior. O VaR das duas fases coincidiu com as seis referências nas tolerâncias absoluta e relativa de `1e-8`. A amostra de mercado das execuções completas usa exclusivamente os arquivos históricos.
++
++A execução com limite zero parou em PETR4 antes do ajuste e gravou o diagnóstico. Com limite de um pregão, as duas fases terminaram e registraram cobertura parcial. Para verificar os resultados a partir da raiz do projeto, use os comandos abaixo.
++
++```powershell
++.\.venv\Scripts\python.exe -m unittest discover -s tests -v
++.\.venv\Scripts\python.exe src\var_baseline.py --offline --strict-cache
++.\.venv\Scripts\python.exe src\phase2_risk_engine_v2.py --offline --strict-cache
++```
++
++| Evidência | Local no repositório |
++|---|---|
++| Fase 1 | `outputs/phase1/runs/run_20261125T051336_163679Z/` |
++| Fase 2.1 | `outputs/phase2_1/runs/run_20261125T051352_640204Z/` |
++| Interrupção com limite zero | `outputs/phase1/runs/run_20261125T051209_924123Z/data_failure.json` |
++| Comparação anterior da Fase 2.1 | `outputs/phase2_1/runs/run_20261125T044102_686674Z/` |
++
++## Limitações e próxima etapa
++
++A origem dos preços ajustados continua sendo o Yahoo Finance. O calendário indica **quando** houve negociação. A conciliação dos preços com uma segunda fonte, a identificação dos motivos das lacunas e a verificação dos eventos corporativos permanecem pendentes. Os snapshots reproduzem a versão dos dados observada no momento da coleta. A reconstrução da versão que o provedor disponibilizava em cada data histórica exigiria arquivos de época.
++
++O próximo passo do Marco 2 é definir um período final de avaliação e registrar a primeira previsão de cada janela antes de comparar modelos. Também é preciso tratar explicitamente as quebras de sequência na recursão da volatilidade e na contagem de transições do teste de Christoffersen. Hoje essas rotinas recebem a sequência de retornos válidos depois da exclusão das lacunas.
+diff --git a/requirements.txt b/requirements.txt
+index eca3f6e..81c6863 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -4,3 +4,5 @@ scipy>=1.11
+ matplotlib>=3.8
+ arch>=7.0
+ yfinance>=0.2.40
++exchange-calendars==4.13.3
++filelock>=3.13,<4
+diff --git a/src/b3_sessions.py b/src/b3_sessions.py
+new file mode 100644
+index 0000000..b5daeea
+--- /dev/null
++++ b/src/b3_sessions.py
+@@ -0,0 +1,38 @@
++"""Calendário de pregões e retornos diários usados pelas duas fases."""
++from functools import lru_cache
++
++import exchange_calendars as xcals
++import numpy as np
++import pandas as pd
++
++
++@lru_cache(maxsize=8)
++def _schedule(first_year: int, last_year: int) -> pd.DataFrame:
++    return xcals.get_calendar(
++        "BVMF", start=f"{first_year}-01-01", end=f"{last_year}-12-31"
++    ).schedule
++
++
++def completed_sessions(start: str, as_of: pd.Timestamp) -> pd.DatetimeIndex:
++    """Só inclui sessões cujo fechamento programado já ocorreu no instante de corte."""
++    beginning = pd.Timestamp(start)
++    cutoff = as_of.tz_convert("UTC")
++    local_day = cutoff.tz_convert("America/Sao_Paulo").tz_localize(None).normalize()
++    if beginning > local_day:
++        raise ValueError("Data inicial posterior ao corte da execução.")
++    schedule = _schedule(beginning.year, local_day.year).loc[beginning:local_day]
++    return schedule.index[schedule["close"] <= cutoff]
++
++
++def session_prices(prices: pd.Series | pd.DataFrame) -> pd.Series | pd.DataFrame:
++    """Expõe lacunas como NaN e exclui observações fora do calendário de negociação."""
++    if prices.empty:
++        return prices
++    start, end = prices.index.min(), prices.index.max()
++    sessions = _schedule(start.year, end.year).loc[start:end].index
++    return prices.reindex(sessions)
++
++
++def daily_log_returns(prices: pd.Series) -> pd.Series:
++    closes = session_prices(prices)
++    return (100 * np.log(closes / closes.shift(1))).replace([np.inf, -np.inf], np.nan).dropna()
+diff --git a/src/data_manifest.py b/src/data_manifest.py
+index d8b86d4..ab4fa7c 100644
+--- a/src/data_manifest.py
++++ b/src/data_manifest.py
+@@ -40,13 +40,15 @@ def write_data_manifest(
+     sources: dict[str, str],
+     settings: dict[str, Any],
+     collected_at_utc: str | None = None,
++    input_records: dict[str, dict] | None = None,
+ ) -> dict[str, Any]:
+     """Write a compact manifest with provenance and final-series checks."""
+     asset_records: list[dict[str, Any]] = []
+     for asset, ticker in assets.items():
+         price = prices[asset]
+         ret = returns[asset]
+-        price_file = data_directory / f"{asset}.csv"
++        record = (input_records or {}).get(asset, {})
++        price_file = path.parent / record["snapshot"] if "snapshot" in record else data_directory / f"{asset}.csv"
+         numeric_prices = pd.to_numeric(price, errors="coerce")
+         numeric_returns = pd.to_numeric(ret, errors="coerce")
+         price_values = numeric_prices.to_numpy(dtype=float)
+@@ -72,12 +74,13 @@ def write_data_manifest(
+             "end_date": str(price.index.max().date()),
+             "price_count": int(len(price)),
+             "return_count": int(len(ret)),
+-            "collected_at_utc": collected_at_utc or datetime.now(timezone.utc).isoformat(),
++            "collected_at_utc": record.get("collected_at_utc", collected_at_utc),
+             "last_observation": str(price.index.max().date()),
+             "price_type": "Close ajustado; auto_adjust=True",
+             "adjustment_convention": "Yahoo Finance ajusta Close para eventos corporativos",
+             "local_file": str(price_file),
+-            "sha256": _file_sha256(price_file),
++            "sha256": record["sha256"] if "sha256" in record else _file_sha256(price_file),
++            "quality": record,
+             "validation": {
+                 "status": "passed" if validation_passed else "failed",
+                 "null_prices": int(numeric_prices.isna().sum()),
+@@ -87,17 +90,20 @@ def write_data_manifest(
+                 "nonfinite_returns": nonfinite_returns,
+                 "returns_abs_over_15pct": int((numeric_returns.abs() > 15.0).sum()),
+             },
+-            "return_count": int(len(ret)),
+         })
+ 
+     manifest = {
+-        "schema_version": 1,
++        "schema_version": 2,
+         "run_id": run_id,
++        "coverage_status": (
++            "partial" if any(r["quality"].get("coverage_status") == "partial" for r in asset_records)
++            else "complete" if input_records else "unknown"
++        ),
+         "created_at_utc": datetime.now(timezone.utc).isoformat(),
+         "settings": settings,
+         "libraries": {
+             name: _package_version(name)
+-            for name in ("pandas", "numpy", "scipy", "arch", "yfinance", "matplotlib")
++            for name in ("pandas", "numpy", "scipy", "arch", "yfinance", "matplotlib", "exchange-calendars", "filelock")
+         },
+         "assets": asset_records,
+     }
+diff --git a/src/market_data.py b/src/market_data.py
+new file mode 100644
+index 0000000..57c2d24
+--- /dev/null
++++ b/src/market_data.py
+@@ -0,0 +1,249 @@
++"""Ingestão local de fechamentos ajustados com trilha de qualidade e snapshots."""
++from __future__ import annotations
++
++import hashlib
++import io
++import json
++import logging
++import os
++import tempfile
++import time
++from collections.abc import Callable
++from dataclasses import dataclass
++from pathlib import Path
++
++import numpy as np
++import pandas as pd
++from filelock import FileLock
++
++if __package__:
++    from .b3_sessions import completed_sessions, daily_log_returns
++else:
++    from b3_sessions import completed_sessions, daily_log_returns
++
++LOG = logging.getLogger("riskagent.data")
++DEFAULT_MAX_STALE_SESSIONS = 1
++
++
++def _date_label(value):
++    """Daily bars may use local midnight or its UTC representation."""
++    try:
++        stamp = pd.Timestamp(value)
++        if stamp.tzinfo is not None:
++            if stamp != stamp.normalize():
++                stamp = stamp.tz_convert("America/Sao_Paulo")
++            stamp = stamp.tz_localize(None)
++        return stamp if pd.notna(stamp) and stamp == stamp.normalize() else pd.NaT
++    except (ValueError, TypeError, OverflowError):
++        return pd.NaT
++
++
++def clean_prices(series: pd.Series, name: str, today: pd.Timestamp) -> tuple[pd.Series, dict]:
++    if isinstance(series.index, pd.DatetimeIndex) and series.index.tz is None:
++        labels = series.index.where(series.index == series.index.normalize())
++    else:
++        labels = pd.DatetimeIndex([_date_label(value) for value in series.index])
++    try:
++        values = series.to_numpy(dtype=float, na_value=np.nan)
++    except (ValueError, TypeError):
++        values = pd.to_numeric(series, errors="coerce").to_numpy(dtype=float, na_value=np.nan)
++    date_ok = labels.notna() & (labels <= today)
++    price_ok = np.isfinite(values) & (values > 0)
++    cleaned = pd.Series(values[date_ok & price_ok], index=labels[date_ok & price_ok], name=name)
++    checks = {
++        "rows": len(series),
++        "invalid_or_intraday_dates": int(labels.isna().sum()),
++        "future_dates": int((labels > today).sum()),
++        "null_or_nonfinite_prices": int((~np.isfinite(values)).sum()),
++        "nonpositive_prices": int((values <= 0).sum()),
++        "duplicate_dates": int(cleaned.index.duplicated().sum()),
++        "out_of_order": not cleaned.index.is_monotonic_increasing,
++        "invalid_rows": int((~(date_ok & price_ok)).sum()),
++    }
++    cleaned = cleaned[~cleaned.index.duplicated(keep="last")].sort_index()
++    if cleaned.empty:
++        raise ValueError(f"Nenhum preco positivo com data valida para {name}.")
++    return cleaned, checks
++
++
++def atomic_bytes(path: Path, payload: bytes) -> None:
++    path.parent.mkdir(parents=True, exist_ok=True)
++    with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as tmp:
++        tmp_path = Path(tmp.name)
++    try:
++        with tmp_path.open("wb") as stream:
++            stream.write(payload)
++            stream.flush()
++            os.fsync(stream.fileno())
++        os.replace(tmp_path, path)
++    finally:
++        tmp_path.unlink(missing_ok=True)
++
++
++def write_json(path: Path, data: dict) -> None:
++    atomic_bytes(path, (json.dumps(data, indent=2, ensure_ascii=False) + "\n").encode("utf-8"))
++
++
++@dataclass
++class MarketInput:
++    prices: pd.Series
++    returns: pd.Series
++    record: dict
++
++
++def add_data_arguments(parser) -> None:
++    parser.add_argument("--offline", action="store_true", help="usa apenas o cache local")
++    parser.add_argument("--strict-cache", action="store_true", help="interrompe se o atraso exceder o limite")
++    parser.add_argument("--max-stale-sessions", type=int, default=DEFAULT_MAX_STALE_SESSIONS,
++                        help="máximo de pregões encerrados em atraso no modo estrito (padrão: 1)")
++
++
++def _read_cache(payload: bytes | None, name: str, today: pd.Timestamp, record: dict) -> pd.Series:
++    cached = pd.Series(dtype=float, name=name)
++    if payload is not None:
++        try:
++            frame = pd.read_csv(io.BytesIO(payload), index_col=0, dtype=str)
++            columns = [c for c in ("Close", "Adj Close", "price", name) if c in frame]
++            if not columns and len(frame.columns) != 1:
++                raise ValueError("Coluna de fechamento ambígua.")
++            parsed, checks = clean_prices(frame[columns[0] if columns else frame.columns[0]], name, today)
++            record["cache_checks"] = checks
++            if checks["invalid_rows"] or checks["duplicate_dates"]:
++                raise ValueError("Cache com datas duplicadas ou linhas inválidas.")
++            cached = parsed
++        except (ValueError, IndexError, UnicodeError) as exc:
++            record["cache_error"] = str(exc)
++            LOG.warning("%s: erro de leitura do cache: %s", name, exc)
++    return cached
++
++
++def _assess_history(raw: pd.Series, sessions: pd.DatetimeIndex, name: str, minimum: int,
++                    strict: bool, max_stale_sessions: int):
++    prices = raw.loc[raw.index.isin(sessions)]
++    returns = daily_log_returns(prices)
++    if len(returns) < minimum:
++        raise RuntimeError(f"Amostra insuficiente para {name}: {len(returns)} retornos validos; minimo {minimum}.")
++    stale = int((sessions > prices.index[-1]).sum())
++    if strict and stale > max_stale_sessions:
++        raise RuntimeError(f"Modo estrito: {name} está {stale} pregão(ões) em atraso; limite {max_stale_sessions}.")
++    internal = sessions[(sessions >= prices.index[0]) & (sessions <= prices.index[-1])]
++    missing = internal.difference(prices.index)
++    return prices, returns, {
++        "coverage_status": "partial" if stale or len(missing) or (sessions[0] < prices.index[0]) else "complete",
++        "stale_sessions": stale, "missing_sessions": missing.strftime("%Y-%m-%d").tolist(),
++        "excluded_dates": raw.index.difference(prices.index).strftime("%Y-%m-%d").tolist(),
++        "missing_before_first_price": int((sessions < prices.index[0]).sum()),
++        "extreme_return_dates": returns.index[returns.abs() > 15].strftime("%Y-%m-%d").tolist(),
++    }
++
++
++def _fetch_sessions(begin: str, *, name: str, today: pd.Timestamp, sessions: pd.DatetimeIndex,
++                    attempts: int, fetch: Callable, attempt_log: list) -> pd.Series:
++    for attempt in range(1, attempts + 1):
++        log = {"start": begin, "attempt": attempt}
++        attempt_log.append(log)
++        try:
++            batch = fetch(begin)
++            if batch is None or batch.empty:
++                raise ValueError("Resposta vazia.")
++        except Exception as exc:
++            log["error"] = str(exc)
++            if attempt == attempts:
++                raise ConnectionError(f"Falha na coleta de {name}: {exc}") from exc
++            time.sleep(min(5 * attempt, 15))
++            continue
++        clean, checks = clean_prices(batch, name, today)
++        log["checks"] = checks
++        if checks["invalid_rows"] or checks["duplicate_dates"]:
++            raise ValueError(f"Lote com linhas inválidas ou duplicadas: {checks}")
++        usable = clean.loc[clean.index.isin(sessions)]
++        log["excluded_dates"] = clean.index.difference(usable.index).strftime("%Y-%m-%d").tolist()
++        if usable.empty:
++            raise ValueError("Lote sem pregões encerrados válidos.")
++        return usable
++
++
++def ingest(name: str, *, cache_path: Path, start: str, minimum: int, overlap_days: int,
++           fetch: Callable[[str], pd.Series], attempts: int = 1, offline: bool = False,
++           strict: bool = False, max_stale_sessions: int = DEFAULT_MAX_STALE_SESSIONS,
++           as_of: pd.Timestamp | None = None, run_dir: Path | None = None) -> MarketInput:
++    if max_stale_sessions < 0 or attempts < 1:
++        raise ValueError("O limite de atraso deve ser não negativo e as tentativas pelo menos uma.")
++    cutoff = pd.Timestamp.now(tz="UTC") if as_of is None else pd.Timestamp(as_of).tz_convert("UTC")
++    today = cutoff.tz_convert("America/Sao_Paulo").tz_localize(None).normalize()
++    sessions = completed_sessions(start, cutoff)
++    if sessions.empty:
++        raise ValueError("Nenhum pregão encerrado no período solicitado.")
++    record = {"calendar": "BVMF", "as_of_utc": cutoff.isoformat(), "last_completed_session": str(sessions[-1].date()),
++              "max_stale_sessions": max_stale_sessions, "strict": strict, "offline": offline,
++              "collected_at_utc": None, "provider_attempts": [], "asset": name}
++    payload = cache_path.read_bytes() if cache_path.is_file() else None
++    cached = _read_cache(payload, name, today, record)
++    cached_valid = cached.loc[cached.index.isin(sessions)]
++
++    def download(begin: str) -> pd.Series:
++        return _fetch_sessions(begin, name=name, today=today, sessions=sessions, attempts=attempts,
++                               fetch=fetch, attempt_log=record["provider_attempts"])
++
++    source = "cache_offline"
++    candidate_payload = None
++    try:
++        if not offline:
++            incremental = len(daily_log_returns(cached_valid)) >= minimum
++            begin = max(pd.Timestamp(start), cached_valid.index[-1] - pd.Timedelta(days=overlap_days)) if incremental else pd.Timestamp(start)
++            try:
++                downloaded = download(str(begin.date()))
++                common = cached_valid.index.intersection(downloaded.index).sort_values()
++                revisions = common[~np.isclose(cached_valid.loc[common], downloaded.loc[common], rtol=1e-6, atol=0)]
++                record["overlap_revisions"] = revisions.strftime("%Y-%m-%d").tolist()
++                # Uma revisão na borda pode ser um ajuste corporativo de toda a série.
++                full_refresh = incremental and (common.empty or common[0] in revisions)
++                if full_refresh:
++                    full = download(start)
++                    if not downloaded.index.difference(full.index).empty or not np.allclose(
++                        downloaded, full.reindex(downloaded.index), rtol=1e-6, atol=0
++                    ):
++                        raise ValueError("O histórico completo diverge do lote que motivou a nova coleta.")
++                    downloaded = full
++                if incremental and not full_refresh:
++                    raw = pd.concat([cached, downloaded])
++                    raw = raw[~raw.index.duplicated(keep="last")].sort_index()
++                    source = "yahoo_finance_incremental+cache"
++                else:
++                    if not cached_valid.index.difference(downloaded.index).empty:
++                        raise ValueError("Histórico completo perdeu datas válidas presentes no cache.")
++                    raw = downloaded
++                    source = "yahoo_finance_full_history"
++                prices, returns, quality = _assess_history(raw, sessions, name, minimum, strict, max_stale_sessions)
++                candidate_payload = raw.rename_axis("Date").to_frame("Close").to_csv(lineterminator="\n").encode("utf-8")
++                record["collected_at_utc"] = pd.Timestamp.now(tz="UTC").isoformat()
++            except (ConnectionError, ValueError, RuntimeError) as exc:
++                source = "cache_fallback_provider_unavailable" if isinstance(exc, ConnectionError) else "cache_fallback_download_invalid"
++                record["fallback_reason"] = str(exc)
++                LOG.warning("%s: %s; motivo: %s", name, source, exc)
++        if candidate_payload is None:
++            prices, returns, quality = _assess_history(cached, sessions, name, minimum, strict, max_stale_sessions)
++            selected = payload
++        else:
++            selected = candidate_payload
++            cache_path.parent.mkdir(parents=True, exist_ok=True)
++            with FileLock(str(cache_path) + ".lock", timeout=30):
++                current = cache_path.read_bytes() if cache_path.is_file() else None
++                if current != payload:
++                    raise RuntimeError(f"Cache de {name} atualizado por outra execução. Repita a coleta.")
++                if selected != current:
++                    atomic_bytes(cache_path, selected)
++        record.update(quality, source_mode=source, sha256=hashlib.sha256(selected).hexdigest())
++        if run_dir is not None:
++            snapshot = Path("inputs") / cache_path.name
++            atomic_bytes(run_dir / snapshot, selected)
++            record["snapshot"] = snapshot.as_posix()
++        LOG.info("%s: %s; %s retornos, %s pregões ausentes e %s em atraso.",
++                 name, source, len(returns), len(quality["missing_sessions"]), quality["stale_sessions"])
++        if quality["stale_sessions"] > max_stale_sessions:
++            LOG.warning("%s: atraso de %s pregões excede o limite de %s.", name, quality["stale_sessions"], max_stale_sessions)
++        return MarketInput(prices, returns, record)
++    except Exception as exc:
++        if run_dir is not None:
++            write_json(run_dir / "data_failure.json", dict(record, status="interrupted", source_mode=source, reason=str(exc)))
++        raise
+diff --git a/src/phase2_risk_engine_v2.py b/src/phase2_risk_engine_v2.py
+index 5e76b25..998de28 100644
+--- a/src/phase2_risk_engine_v2.py
++++ b/src/phase2_risk_engine_v2.py
+@@ -27,10 +27,14 @@ import pandas as pd
+ from scipy import stats
+ from scipy.special import xlogy
+ 
+-try:
+-    from data_manifest import write_data_manifest
+-except ModuleNotFoundError:  # permite importacao como pacote em testes e ferramentas
++if __package__:
++    from . import market_data
++    from .b3_sessions import daily_log_returns, session_prices
+     from .data_manifest import write_data_manifest
++else:
++    import market_data
++    from b3_sessions import daily_log_returns, session_prices
++    from data_manifest import write_data_manifest
+ 
+ try:
+     import yfinance as yf
+@@ -66,7 +70,6 @@ MIN_PERIOD_OBS = 250         # minimo para backtests por periodo
+ GARCH_REFIT_EVERY = 20       # reestima GJR-GARCH a cada 20 pregoes
+ EWMA_LAMBDA = 0.94
+ CACHE_OVERLAP_DAYS = 5
+-MAX_CACHE_AGE_DAYS = 7
+ MIN_TOTAL_RETURNS = WINDOW + MIN_TEST_OBS
+ 
+ LOG = logging.getLogger("riskagent.phase2")
+@@ -84,37 +87,8 @@ class ForecastSet:
+ # UTILITARIOS DE DATA E CACHE
+ # ---------------------------------------------------------------------------
+ def _normalise_price_series(series: pd.Series, name: str) -> pd.Series:
+-    raw_count = len(series)
+-    series = pd.to_numeric(series, errors="coerce").astype(float)
+-    idx = pd.to_datetime(series.index, errors="coerce", utc=True).tz_convert(None).normalize()
+-    valid = ~pd.isna(idx)
+     today = pd.Timestamp.now(tz="UTC").tz_localize(None).normalize()
+-    valid &= idx <= today
+-    series = series.loc[valid]
+-    idx = idx[valid]
+-    series.index = idx
+-    series = series[~series.index.duplicated(keep="last")].sort_index()
+-    series = series[series > 0]
+-    if len(series) != raw_count:
+-        LOG.warning("%s: %s linhas de preco/data invalidas descartadas.", name, raw_count - len(series))
+-    if series.empty:
+-        raise ValueError(f"Nenhum preco positivo com data valida para {name}.")
+-    series.name = name
+-    return series
+-
+-
+-def _read_price_cache(path: Path, name: str) -> pd.Series:
+-    if not path.exists():
+-        return pd.Series(dtype=float, name=name)
+-    try:
+-        frame = pd.read_csv(path, index_col=0, parse_dates=True)
+-        if frame.empty:
+-            return pd.Series(dtype=float, name=name)
+-        preferred = next((c for c in ("Close", "Adj Close", "price", name) if c in frame.columns), frame.columns[0])
+-        return _normalise_price_series(frame[preferred], name)
+-    except Exception as exc:
+-        LOG.warning("Nao foi possivel ler o cache %s: %s", path, exc)
+-        return pd.Series(dtype=float, name=name)
++    return market_data.clean_prices(series, name, today)[0]
+ 
+ 
+ def _download_yahoo(ticker: str, name: str, start_date: str = START_DATE) -> pd.Series:
+@@ -128,10 +102,11 @@ def _download_yahoo(ticker: str, name: str, start_date: str = START_DATE) -> pd.
+         auto_adjust=True,
+         progress=False,
+         threads=False,
++        timeout=15,
+     )
+     if data is None or data.empty:
+         # Segunda tentativa usando a interface Ticker.history.
+-        data = yf.Ticker(ticker).history(start=start_date, auto_adjust=True)
++        data = yf.Ticker(ticker).history(start=start_date, auto_adjust=True, timeout=15)
+     if data is None or data.empty:
+         raise RuntimeError(f"Yahoo Finance nao retornou precos para {ticker}.")
+     if isinstance(data.columns, pd.MultiIndex):
+@@ -147,7 +122,7 @@ def _download_yahoo(ticker: str, name: str, start_date: str = START_DATE) -> pd.
+             close = close[ticker]
+         else:
+             close = close.iloc[:, 0]
+-    return _normalise_price_series(close, name)
++    return close
+ 
+ 
+ def _validate_return_sample(prices: pd.Series, name: str) -> pd.Series:
+@@ -160,82 +135,23 @@ def _validate_return_sample(prices: pd.Series, name: str) -> pd.Series:
+     return returns
+ 
+ 
+-def _cache_age_days(prices: pd.Series) -> tuple[pd.Timestamp, int]:
+-    last_date = pd.Timestamp(prices.index.max()).normalize()
+-    today = pd.Timestamp.now(tz="UTC").tz_localize(None).normalize()
+-    return last_date, max(0, int((today - last_date).days))
+-
+-
+-def load_prices(name: str, ticker: str, strict_cache: bool = False) -> pd.Series:
+-    """Carrega cache local e tenta atualiza-lo com dados do Yahoo Finance."""
+-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+-    cache_path = DATA_DIR / f"{name}.csv"
+-    cached = _read_price_cache(cache_path, name)
+-    downloaded = pd.Series(dtype=float, name=name)
+-    source_mode = "unknown"
+-
+-    download_start = START_DATE
+-    cache_has_minimum = not cached.empty and len(prices_to_returns(cached)) >= MIN_TOTAL_RETURNS
+-    if cache_has_minimum:
+-        download_start = max(
+-            pd.Timestamp(START_DATE),
+-            cached.index.max() - pd.Timedelta(days=CACHE_OVERLAP_DAYS),
+-        ).strftime("%Y-%m-%d")
+-    elif not cached.empty:
+-        LOG.warning("Cache de %s abaixo do minimo; solicitando historico completo desde %s.", name, START_DATE)
+-    try:
+-        downloaded = _normalise_price_series(
+-            _download_yahoo(ticker, name, start_date=download_start), name
+-        )
+-        source_mode = "yahoo_finance_incremental+cache" if not cached.empty else "yahoo_finance_full_history"
+-        LOG.info("%s: %s precos recebidos do Yahoo Finance.", name, len(downloaded))
+-    except Exception as exc:
+-        if cached.empty:
+-            raise RuntimeError(
+-                f"Falha ao obter {name} ({ticker}) e nao existe cache local. "
+-                f"Verifique a internet e tente novamente. Detalhe: {exc}"
+-            ) from exc
+-        LOG.warning("%s: Yahoo Finance indisponivel; usando cache local (%s).", name, exc)
+-        source_mode = "cache_fallback_provider_unavailable"
+-
+-    if cached.empty:
+-        prices = downloaded
+-    elif downloaded.empty:
+-        prices = cached
+-        source_mode = "cache_fallback_provider_unavailable"
+-    else:
+-        prices = pd.concat([cached, downloaded]).groupby(level=0).last().sort_index()
+-        prices.name = name
++def _load_input(name: str, ticker: str, strict_cache: bool = False, **options):
++    result = market_data.ingest(
++        name, cache_path=DATA_DIR / f"{name}.csv", start=START_DATE,
++        minimum=MIN_TOTAL_RETURNS, overlap_days=CACHE_OVERLAP_DAYS,
++        fetch=lambda start: _download_yahoo(ticker, name, start_date=start),
++        attempts=3, strict=strict_cache, **options,
++    )
++    DATA_SOURCES[name] = result.record["source_mode"]
++    return result
+ 
+-    # Valida a quantidade efetiva depois da transformacao preco -> retorno.
+-    try:
+-        _validate_return_sample(prices, name)
+-    except Exception:
+-        if cached.empty or prices is cached:
+-            raise
+-        _validate_return_sample(cached, name)
+-        LOG.warning("Download de %s incompleto; cache anterior valido preservado.", name)
+-        prices = cached
+-        source_mode = "cache_fallback_download_invalid"
+-    else:
+-        prices.index.name = "Date"
+-        # Nunca gravar resposta vazia, invalida ou curta sobre um cache valido.
+-        prices.to_frame("Close").to_csv(cache_path)
+ 
+-    last_date, age_days = _cache_age_days(prices)
+-    message = f"{name}: ultima data {last_date:%Y-%m-%d}; idade dos dados/cache {age_days} dia(s)."
+-    LOG.warning(message)
+-    if strict_cache and age_days > MAX_CACHE_AGE_DAYS:
+-        raise RuntimeError(f"Modo estrito: {message} Limite permitido: {MAX_CACHE_AGE_DAYS} dias.")
+-    DATA_SOURCES[name] = source_mode
+-    return prices
++def load_prices(name: str, ticker: str, strict_cache: bool = False, **options) -> pd.Series:
++    return _load_input(name, ticker, strict_cache, **options).prices
+ 
+ 
+ def prices_to_returns(prices: pd.Series) -> pd.Series:
+-    """Retornos logaritmicos diarios em porcentagem."""
+-    returns = (100.0 * np.log(prices / prices.shift(1))).replace([np.inf, -np.inf], np.nan).dropna()
+-    returns.name = prices.name
+-    return returns
++    return daily_log_returns(prices)
+ 
+ 
+ # ---------------------------------------------------------------------------
+@@ -663,11 +579,11 @@ def build_portfolio_log_returns(
+         raise KeyError(f"Precos ausentes para ativos da carteira: {missing}")
+ 
+     prices = pd.concat(
+-        [price_series[name].rename(name) for name in weights_dict], axis=1, join="inner"
+-    ).dropna()
++        [price_series[name].rename(name) for name in weights_dict], axis=1, join="outer"
++    )
+     if len(prices) < 2:
+         raise ValueError("Dados de preco insuficientes para calcular a carteira.")
+-    simple_returns = prices.pct_change().dropna()
++    simple_returns = session_prices(prices).pct_change(fill_method=None).dropna()
+     weights = pd.Series(weights_dict, dtype=float)
+     portfolio_simple = simple_returns.mul(weights, axis=1).sum(axis=1)
+     if (portfolio_simple <= -1.0).any():
+@@ -866,7 +782,7 @@ def write_report(
+ def main() -> None:
+     global OUTPUT_DIR
+     parser = argparse.ArgumentParser(description="RiskAgent B3 - Fase 2.1")
+-    parser.add_argument("--strict-cache", action="store_true", help="interrompe se os dados disponiveis tiverem mais de 7 dias")
++    market_data.add_data_arguments(parser)
+     args = parser.parse_args()
+     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+     run_started = pd.Timestamp.now(tz="UTC")
+@@ -877,21 +793,40 @@ def main() -> None:
+ 
+     if arch_model is None:
+         raise SystemExit("Dependencia ausente: arch. Execute: py -m pip install arch")
+-    if yf is None and not all((DATA_DIR / f"{name}.csv").exists() for name in ASSETS):
+-        raise SystemExit("Dependencia ausente: yfinance. Execute: py -m pip install yfinance")
+-
+-    price_series: dict[str, pd.Series] = {}
+-    returns: dict[str, pd.Series] = {}
+-    for asset, ticker in ASSETS.items():
+-        LOG.info("Carregando dados de %s (%s)...", asset, ticker)
+-        price_series[asset] = load_prices(asset, ticker, strict_cache=args.strict_cache)
+-        returns[asset] = prices_to_returns(price_series[asset])
+-        LOG.info("%s: %s retornos diarios.", asset, len(returns[asset]))
++    inputs = {
++        asset: _load_input(asset, ticker, strict_cache=args.strict_cache, offline=args.offline,
++                           max_stale_sessions=args.max_stale_sessions, as_of=run_started, run_dir=OUTPUT_DIR)
++        for asset, ticker in ASSETS.items()
++    }
++    price_series = {asset: data.prices for asset, data in inputs.items()}
++    returns = {asset: data.returns for asset, data in inputs.items()}
+ 
+     # Carteira 50/50: pesos aplicados a retornos simples, nao a log-retornos.
+     portfolio_returns = build_portfolio_log_returns(price_series, PORTFOLIO_WEIGHTS)
++    if len(portfolio_returns) < MIN_TOTAL_RETURNS:
++        reason = f"Amostra comum insuficiente para a carteira: {len(portfolio_returns)} retornos."
++        market_data.write_json(OUTPUT_DIR / "data_failure.json", {"status": "interrupted", "asset": portfolio_returns.name, "reason": reason})
++        raise RuntimeError(reason)
+     returns[portfolio_returns.name] = portfolio_returns
+ 
++    write_data_manifest(
++        OUTPUT_DIR / "manifest.json",
++        run_id=OUTPUT_DIR.name,
++        assets=ASSETS,
++        prices=price_series,
++        returns={asset: data.returns for asset, data in inputs.items()},
++        input_records={asset: data.record for asset, data in inputs.items()},
++        data_directory=DATA_DIR,
++        sources=DATA_SOURCES,
++        settings={
++            "alpha": ALPHA,
++            "window": WINDOW,
++            "min_test_obs": MIN_TEST_OBS,
++            "garch_refit_every": GARCH_REFIT_EVERY,
++            "portfolio_weights": PORTFOLIO_WEIGHTS,
++        },
++    )
++
+     save_portfolio_weights()
+ 
+     forecast_tables: list[pd.DataFrame] = []
+@@ -947,23 +882,7 @@ def main() -> None:
+         {name: len(values) for name, values in price_series.items()},
+         period_metrics,
+     )
+-    write_data_manifest(
+-        OUTPUT_DIR / "manifest.json",
+-        run_id=OUTPUT_DIR.name,
+-        assets=ASSETS,
+-        prices=price_series,
+-        returns={asset: prices_to_returns(price_series[asset]) for asset in ASSETS},
+-        data_directory=DATA_DIR,
+-        sources=DATA_SOURCES,
+-        settings={
+-            "alpha": ALPHA,
+-            "window": WINDOW,
+-            "min_test_obs": MIN_TEST_OBS,
+-            "garch_refit_every": GARCH_REFIT_EVERY,
+-            "portfolio_weights": PORTFOLIO_WEIGHTS,
+-        },
+-        collected_at_utc=run_started.isoformat(),
+-    )
++
+ 
+     print("\nFASE 2 CONCLUIDA")
+     print(f"Resultados salvos em: {OUTPUT_DIR}")
+diff --git a/src/var_baseline.py b/src/var_baseline.py
+index 76e6f60..b0455f0 100644
+--- a/src/var_baseline.py
++++ b/src/var_baseline.py
+@@ -26,10 +26,14 @@ from arch import arch_model
+ from scipy import stats
+ from scipy.special import xlogy
+ 
+-try:
+-    from data_manifest import write_data_manifest
+-except ModuleNotFoundError:  # permite importacao como pacote em testes e ferramentas
++if __package__:
++    from . import market_data
++    from .b3_sessions import daily_log_returns
+     from .data_manifest import write_data_manifest
++else:
++    import market_data
++    from b3_sessions import daily_log_returns
++    from data_manifest import write_data_manifest
+ 
+ # ── Configuração ─────────────────────────────────────────────────────────────
+ ATIVOS = {"PETR4": "PETR4.SA", "VALE3": "VALE3.SA", "IBOV": "^BVSP"}
+@@ -41,7 +45,6 @@ LAMBDA = 0.94          # decaimento do EWMA (padrão RiskMetrics)
+ MIN_TEST_OBS = 250
+ MIN_RETURNS = JANELA + MIN_TEST_OBS
+ CACHE_OVERLAP_DAYS = 5
+-MAX_CACHE_AGE_DAYS = 7
+ PLOT_DE, PLOT_ATE = "2019-10-01", "2020-12-31"  # zoom na crise da covid
+ 
+ RAIZ = Path(__file__).resolve().parents[1]
+@@ -53,26 +56,12 @@ DATA_SOURCES: dict[str, str] = {}
+ 
+ # ── Dados ────────────────────────────────────────────────────────────────────
+ def _normalizar_precos(series: pd.Series, nome: str) -> pd.Series:
+-    """Valida precos, normaliza datas, remove duplicidades e ordena cronologicamente."""
+-    values = pd.to_numeric(pd.Series(series.to_numpy()), errors="coerce")
+-    index = pd.to_datetime(series.index, errors="coerce", utc=True).tz_convert(None).normalize()
+-    valid_dates = ~pd.isna(index)
+     today = pd.Timestamp.now(tz="UTC").tz_localize(None).normalize()
+-    valid_dates &= index <= today
+-    valid_prices = np.isfinite(values.to_numpy(dtype=float)) & (values.to_numpy(dtype=float) > 0)
+-    valid = valid_dates & valid_prices
+-    removed = int((~valid).sum())
+-    clean = pd.Series(values.to_numpy()[valid], index=index[valid], name=nome)
+-    clean = clean[~clean.index.duplicated(keep="last")].sort_index()
+-    if removed:
+-        logging.warning("%s: %s linhas de preco/data invalidas descartadas.", nome, removed)
+-    if clean.empty:
+-        raise ValueError(f"Nenhum preco positivo com data valida para {nome}.")
+-    return clean
++    return market_data.clean_prices(series, nome, today)[0]
+ 
+ 
+ def _calcular_retornos(preco: pd.Series, nome: str) -> pd.Series:
+-    return (100 * np.log(preco / preco.shift(1))).replace([np.inf, -np.inf], np.nan).dropna().rename(nome)
++    return daily_log_returns(preco).rename(nome)
+ 
+ 
+ def validar_amostra(retornos: pd.Series, nome: str = "ativo") -> None:
+@@ -83,92 +72,34 @@ def validar_amostra(retornos: pd.Series, nome: str = "ativo") -> None:
+         )
+ 
+ 
+-def _data_idade(series: pd.Series) -> tuple[pd.Timestamp, int]:
+-    last = pd.Timestamp(series.index.max()).normalize()
+-    today = pd.Timestamp.now(tz="UTC").tz_localize(None).normalize()
+-    return last, max(0, int((today - last).days))
+-
+-
+ def _baixar_yahoo(ticker: str, start: str = INICIO) -> pd.Series:
+     """Preço de fechamento ajustado; tenta yf.download e, se falhar, Ticker.history."""
+     try:
+-        px = yf.download(ticker, start=start, auto_adjust=True, progress=False)["Close"]
++        px = yf.download(ticker, start=start, auto_adjust=True, progress=False, timeout=15)["Close"]
+         if isinstance(px, pd.DataFrame):  # versões novas do yfinance
+             px = px.iloc[:, 0]
+         if px.dropna().size > 0:
+-            return _normalizar_precos(px, ticker)
++            return px
+     except Exception as erro:
+         print(f"  yf.download falhou ({erro}); tentando outro método...")
+-    px = yf.Ticker(ticker).history(start=start, auto_adjust=True)["Close"]
+-    return _normalizar_precos(px, ticker)
++    px = yf.Ticker(ticker).history(start=start, auto_adjust=True, timeout=15)["Close"]
++    return px
+ 
+ 
+-def baixar_retornos(nome: str, ticker: str, tentativas: int = 4, strict_cache: bool = False) -> pd.Series:
+-    """Atualiza precos incrementalmente e devolve retornos validados em percentual."""
+-    import time
++def _load_input(nome: str, ticker: str, tentativas: int = 4, strict_cache: bool = False, **options):
++    result = market_data.ingest(
++        nome, cache_path=DADOS / f"{nome}.csv", start=INICIO,
++        minimum=MIN_RETURNS, overlap_days=CACHE_OVERLAP_DAYS,
++        fetch=lambda start: _baixar_yahoo(ticker, start=start),
++        attempts=tentativas, strict=strict_cache, **options,
++    )
++    DATA_SOURCES[nome] = result.record["source_mode"]
++    return result
+ 
+-    DADOS.mkdir(parents=True, exist_ok=True)
+-    arquivo = DADOS / f"{nome}.csv"
+-    cache = pd.Series(dtype=float, name=nome)
+-    if arquivo.exists():
+-        try:
+-            cached_frame = pd.read_csv(arquivo, index_col=0, parse_dates=True)
+-            cache = _normalizar_precos(cached_frame.iloc[:, 0], nome)
+-        except Exception as erro:
+-            logging.warning("Cache de %s invalido; sera mantido intacto e tentarei baixar dados: %s", nome, erro)
+-
+-    cache_has_minimum = not cache.empty and len(_calcular_retornos(cache, nome)) >= MIN_RETURNS
+-    if cache_has_minimum:
+-        overlap_start = (cache.index.max() - pd.Timedelta(days=CACHE_OVERLAP_DAYS)).strftime("%Y-%m-%d")
+-        download_start = max(pd.Timestamp(INICIO), pd.Timestamp(overlap_start)).strftime("%Y-%m-%d")
+-    else:
+-        if not cache.empty:
+-            logging.warning("Cache de %s abaixo do minimo; solicitando historico completo desde %s.", nome, INICIO)
+-        download_start = INICIO
+-
+-    downloaded = pd.Series(dtype=float, name=nome)
+-    for tentativa in range(1, tentativas + 1):
+-        try:
+-            downloaded = _baixar_yahoo(ticker, start=download_start)
+-            if not downloaded.empty:
+-                break
+-            raise ValueError("provedor retornou conjunto vazio")
+-        except Exception as erro:
+-            logging.warning("Atualizacao %s (%s/%s) falhou: %s", nome, tentativa, tentativas, erro)
+-            if tentativa < tentativas:
+-                time.sleep(5 * tentativa)
+ 
+-    if not downloaded.empty:
+-        try:
+-            # Valida o lote remoto isoladamente: dados ruins nao podem "passar"
+-            # apenas porque o cache anterior torna a concatenacao utilizavel.
+-            downloaded = _normalizar_precos(downloaded, nome)
+-            candidate = _normalizar_precos(pd.concat([cache, downloaded]), nome) if not cache.empty else downloaded
+-            candidate_returns = _calcular_retornos(candidate, nome)
+-            validar_amostra(candidate_returns, nome)
+-            # O cache so muda depois de validacao completa da serie candidata.
+-            candidate.to_csv(arquivo)
+-            preco = candidate
+-            source = "yahoo_finance+cache" if not cache.empty else "yahoo_finance_full_history"
+-        except Exception as erro:
+-            logging.warning("Download de %s nao passou na validacao; cache anterior preservado: %s", nome, erro)
+-            preco = cache
+-            source = "cache_fallback_download_invalid"
+-    else:
+-        preco = cache
+-        source = "cache_fallback_provider_unavailable"
+-
+-    if preco.empty:
+-        raise RuntimeError(f"Nao ha cache valido nem download valido para {ticker}.")
+-    retornos = _calcular_retornos(preco, nome)
+-    validar_amostra(retornos, nome)
+-    last_date, age_days = _data_idade(preco)
+-    message = f"{nome}: ultima data {last_date:%Y-%m-%d}; idade dos dados/cache {age_days} dia(s); origem: {source}."
+-    logging.warning(message)
+-    if strict_cache and age_days > MAX_CACHE_AGE_DAYS:
+-        raise RuntimeError(f"Modo estrito: {message} Limite permitido: {MAX_CACHE_AGE_DAYS} dias.")
+-    DATA_SOURCES[nome] = source
+-    return retornos
++def baixar_retornos(nome: str, ticker: str, tentativas: int = 4, strict_cache: bool = False, **options) -> pd.Series:
++    """Atualiza o cache e devolve retornos entre dois pregões consecutivos."""
++    return _load_input(nome, ticker, tentativas, strict_cache, **options).returns
+ 
+ 
+ # ── Modelos: cada um prevê o VaR do dia t usando apenas dados até t-1 ────────
+@@ -316,37 +247,26 @@ def main() -> None:
+     if hasattr(sys.stdout, "reconfigure"):
+         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+     parser = argparse.ArgumentParser(description="RiskAgent B3 - Fase 1")
+-    parser.add_argument("--strict-cache", action="store_true", help="interrompe se os dados disponiveis tiverem mais de 7 dias")
++    market_data.add_data_arguments(parser)
+     args = parser.parse_args()
++    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+     run_started = pd.Timestamp.now(tz="UTC")
+     run_stamp = run_started.strftime("run_%Y%m%dT%H%M%S_%fZ")
+     SAIDA = SAIDA_RAIZ / "phase1" / "runs" / run_stamp
+     SAIDA.mkdir(parents=True, exist_ok=True)
+     linhas = []
+-    all_returns: dict[str, pd.Series] = {}
+-    all_garch_diagnostics: list[dict] = []
+-    for ativo, ticker in ATIVOS.items():
+-        print(f"▶ {ativo}: baixando dados e ajustando modelos...")
+-        r = baixar_retornos(ativo, ticker, strict_cache=args.strict_cache)
+-        all_returns[ativo] = r
+-        gjr_var, garch_diagnostics = var_gjr_garch_t(r, ativo)
+-        all_garch_diagnostics.extend(garch_diagnostics)
+-        vars_ = {
+-            "Simulação histórica": var_historico(r),
+-            "EWMA (normal)": var_ewma(r),
+-            "GJR-GARCH-t": gjr_var,
+-        }
+-        # amostra comum a todos os modelos: só depois da primeira janela
+-        vars_ = {m: v.iloc[JANELA:] for m, v in vars_.items()}
+-        linhas += avaliar(ativo, r, vars_)
+-        grafico(ativo, r, vars_)
+-
++    inputs = {
++        asset: _load_input(asset, ticker, strict_cache=args.strict_cache, offline=args.offline,
++                           max_stale_sessions=args.max_stale_sessions, as_of=run_started, run_dir=SAIDA)
++        for asset, ticker in ATIVOS.items()
++    }
+     write_data_manifest(
+         SAIDA / "manifest.json",
+         run_id=SAIDA.name,
+         assets=ATIVOS,
+-        prices={asset: pd.read_csv(DADOS / f"{asset}.csv", index_col=0, parse_dates=True).iloc[:, 0] for asset in ATIVOS},
+-        returns=all_returns,
++        prices={asset: data.prices for asset, data in inputs.items()},
++        returns={asset: data.returns for asset, data in inputs.items()},
++        input_records={asset: data.record for asset, data in inputs.items()},
+         data_directory=DADOS,
+         sources=DATA_SOURCES,
+         settings={
+@@ -356,9 +276,24 @@ def main() -> None:
+             "garch_refit_every": REESTIMAR_A_CADA,
+             "ewma_lambda": LAMBDA,
+         },
+-        collected_at_utc=run_started.isoformat(),
+     )
+ 
++    all_garch_diagnostics: list[dict] = []
++    for ativo, data in inputs.items():
++        r = data.returns
++        print(f"▶ {ativo}: ajustando modelos com {len(r)} retornos diários...")
++        gjr_var, garch_diagnostics = var_gjr_garch_t(r, ativo)
++        all_garch_diagnostics.extend(garch_diagnostics)
++        vars_ = {
++            "Simulação histórica": var_historico(r),
++            "EWMA (normal)": var_ewma(r),
++            "GJR-GARCH-t": gjr_var,
++        }
++        # amostra comum a todos os modelos: só depois da primeira janela
++        vars_ = {m: v.iloc[JANELA:] for m, v in vars_.items()}
++        linhas += avaliar(ativo, r, vars_)
++        grafico(ativo, r, vars_)
++
+     tabela = pd.DataFrame(linhas)
+     tabela.to_csv(SAIDA / "resultados_var.csv", index=False)
+     pd.DataFrame(all_garch_diagnostics).to_csv(SAIDA / "garch_diagnostics.csv", index=False)
+diff --git a/tests/test_market_data.py b/tests/test_market_data.py
+new file mode 100644
+index 0000000..a8d4c62
+--- /dev/null
++++ b/tests/test_market_data.py
+@@ -0,0 +1,186 @@
++import hashlib
++import json
++import sys
++import tempfile
++import unittest
++from pathlib import Path
++from unittest.mock import Mock, patch
++
++import numpy as np
++import pandas as pd
++
++sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
++from b3_sessions import completed_sessions, daily_log_returns
++from data_manifest import write_data_manifest
++from market_data import atomic_bytes, clean_prices, ingest
++from phase2_risk_engine_v2 import build_portfolio_log_returns
++
++
++def quotes(dates, values):
++    return pd.Series(values, index=pd.to_datetime(dates), name="A", dtype=float)
++
++
++class CalendarTests(unittest.TestCase):
++    def test_holiday_weekend_and_intraday_cutoff(self):
++        # Quinta 19, sexta feriado, segunda 23: antes do fechamento, 19 ainda é o último.
++        for cutoff in ("2026-11-20 23:00Z", "2026-11-22 23:00Z", "2026-11-23 15:00Z"):
++            with self.subTest(cutoff=cutoff):
++                days = completed_sessions("2026-11-16", pd.Timestamp(cutoff))
++                self.assertEqual(days[-1], pd.Timestamp("2026-11-19"))
++        days = completed_sessions("2026-11-16", pd.Timestamp("2026-11-23 23:00Z"))
++        self.assertEqual(days[-1], pd.Timestamp("2026-11-23"))
++
++    def test_november_2020_exception_and_july_2026_session(self):
++        for date in ("2020-11-20", "2026-07-09"):
++            days = completed_sessions(date, pd.Timestamp(f"{date} 23:00Z"))
++            self.assertEqual(days.tolist(), [pd.Timestamp(date)])
++
++    def test_missing_close_and_next_return_excluded_for_asset_and_portfolio(self):
++        dates = ["2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-23"]
++        full = quotes(dates, [100, 101, 110, 121, 132])
++        gap = full.drop(pd.Timestamp("2026-11-17"))
++        expected = pd.to_datetime(["2026-11-19", "2026-11-23"])
++        ret = daily_log_returns(gap)
++        self.assertEqual(ret.index.tolist(), expected.tolist())
++        np.testing.assert_allclose(ret, 100 * np.log([121 / 110, 132 / 121]))
++        portfolio = build_portfolio_log_returns({"A": full, "B": gap}, {"A": 0.5, "B": 0.5})
++        pd.testing.assert_series_equal(portfolio, ret, check_names=False)
++
++    def test_midnight_local_and_utc_representations_agree(self):
++        local = pd.Timestamp("2026-11-19", tz="America/Sao_Paulo")
++        for stamp in (local, local.tz_convert("UTC"), pd.Timestamp("2026-11-19", tz="UTC")):
++            clean, checks = clean_prices(pd.Series([2.0], index=[stamp]), "A", pd.Timestamp("2026-11-23"))
++            self.assertEqual(clean.index.tolist(), [pd.Timestamp("2026-11-19")])
++            self.assertEqual(checks["invalid_rows"], 0)
++        with self.assertRaises(ValueError):
++            clean_prices(pd.Series([2.0], index=[local + pd.Timedelta(hours=14)]), "A", pd.Timestamp("2026-11-23"))
++
++
++class IngestionTests(unittest.TestCase):
++    def setUp(self):
++        temp = tempfile.TemporaryDirectory()
++        self.addCleanup(temp.cleanup)
++        self.root = Path(temp.name)
++        self.cache = self.root / "raw" / "A.csv"
++        self.cache.parent.mkdir()
++        self.run = self.root / "run"
++        self.prices = quotes(["2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19"], [100, 101, 102, 103])
++        self.prices.to_frame("Close").to_csv(self.cache)
++        self.original = self.cache.read_bytes()
++        self.fetch = Mock(side_effect=AssertionError("consulta inesperada ao provedor"))
++
++    def load(self, **kwargs):
++        options = dict(cache_path=self.cache, start="2026-11-16", minimum=2, overlap_days=5,
++                       fetch=self.fetch, run_dir=self.run, as_of=pd.Timestamp("2026-11-23 23:00Z"))
++        return ingest("A", **(options | kwargs))
++
++    def test_offline_snapshot_and_manifest_survive_cache_change(self):
++        result = self.load(offline=True, strict=True, max_stale_sessions=1)
++        self.fetch.assert_not_called()
++        self.assertEqual(result.record["stale_sessions"], 1)
++        self.assertIsNone(result.record["collected_at_utc"])
++        self.cache.write_bytes(b"changed")
++        manifest = write_data_manifest(
++            self.run / "manifest.json", run_id="test", assets={"A": "A.SA"}, prices={"A": result.prices},
++            returns={"A": result.returns}, sources={"A": result.record["source_mode"]}, data_directory=self.cache.parent,
++            input_records={"A": result.record}, settings={})
++        snapshot = Path(manifest["assets"][0]["local_file"])
++        self.assertEqual(snapshot.read_bytes(), self.original)
++        self.assertEqual(manifest["assets"][0]["sha256"], hashlib.sha256(self.original).hexdigest())
++        self.assertIsNone(manifest["assets"][0]["collected_at_utc"])
++        self.assertEqual(manifest["coverage_status"], "partial")
++
++    def test_strict_rejected_candidate_preserves_exact_cache(self):
++        revised = self.prices.copy()
++        revised.iloc[-1] = 104
++        with self.assertRaisesRegex(RuntimeError, "Modo estrito"):
++            self.load(fetch=Mock(return_value=revised), strict=True, max_stale_sessions=0)
++        self.assertEqual(self.cache.read_bytes(), self.original)
++        failure = json.loads((self.run / "data_failure.json").read_text("utf-8"))
++        self.assertEqual(failure["status"], "interrupted")
++        self.assertIn("Modo estrito", failure["fallback_reason"])
++
++    def test_missing_cache_offline_interrupts_before_creating_snapshot(self):
++        self.cache.unlink()
++        with self.assertRaisesRegex(RuntimeError, "Amostra insuficiente"):
++            self.load(offline=True)
++        self.fetch.assert_not_called()
++        self.assertFalse(self.cache.exists())
++        self.assertFalse((self.run / "inputs").exists())
++        self.assertTrue((self.run / "data_failure.json").is_file())
++
++    def test_invalid_partial_batch_is_rejected_despite_valid_cache(self):
++        for bad in [np.nan, -1, np.inf]:
++            with self.subTest(bad=bad):
++                remote = quotes(["2026-11-19", "2026-11-23"], [123, bad])
++                result = self.load(fetch=Mock(return_value=remote))
++                self.assertEqual(result.record["source_mode"], "cache_fallback_download_invalid")
++                self.assertIsNone(result.record["collected_at_utc"])
++                self.assertEqual(self.cache.read_bytes(), self.original)
++
++    def test_cache_with_invalid_rows_interrupts_offline(self):
++        self.cache.write_bytes(self.original + b"2026-11-23,inf\n")
++        with self.assertRaisesRegex(RuntimeError, "Amostra insuficiente"):
++            self.load(offline=True)
++        self.assertIn("cache_error", json.loads((self.run / "data_failure.json").read_text("utf-8")))
++
++    def test_partial_current_bar_omitted_from_written_cache(self):
++        remote = quotes(["2026-11-19", "2026-11-23"], [103, 999])
++        result = self.load(fetch=Mock(return_value=remote), as_of=pd.Timestamp("2026-11-23 15:00Z"),
++                           strict=True, max_stale_sessions=0)
++        self.assertEqual(result.record["stale_sessions"], 0)
++        self.assertEqual(result.record["provider_attempts"][0]["excluded_dates"], ["2026-11-23"])
++        self.assertNotIn(b"2026-11-23", self.cache.read_bytes())
++
++    def test_adjustment_at_overlap_boundary_requires_consistent_full_history(self):
++        remote = self.prices * 0.5
++        remote.loc[pd.Timestamp("2026-11-23")] = 52
++        fetch = Mock(side_effect=[remote.iloc[-3:], remote])
++        result = self.load(fetch=fetch, overlap_days=1)
++        self.assertEqual([c.args[0] for c in fetch.call_args_list], ["2026-11-18", "2026-11-16"])
++        self.assertEqual(result.record["source_mode"], "yahoo_finance_full_history")
++        self.assertIn("2026-11-18", result.record["overlap_revisions"])
++        np.testing.assert_allclose(result.prices, remote)
++
++    def test_incomplete_full_refresh_keeps_previous_cache(self):
++        revised = self.prices.iloc[-2:] * 0.5
++        result = self.load(fetch=Mock(side_effect=[revised, revised]))
++        self.assertEqual(result.record["source_mode"], "cache_fallback_download_invalid")
++        self.assertEqual(self.cache.read_bytes(), self.original)
++
++    def test_transient_failure_and_retry(self):
++        remote = quotes(["2026-11-19", "2026-11-23"], [103, 105])
++        with patch("market_data.time.sleep") as sleep:
++            result = self.load(fetch=Mock(side_effect=[TimeoutError("timeout"), remote]), attempts=2)
++        sleep.assert_called_once_with(5)
++        self.assertEqual(result.record["provider_attempts"][0]["error"], "timeout")
++        self.assertEqual(result.record["stale_sessions"], 0)
++        self.assertIsNotNone(result.record["collected_at_utc"])
++
++    def test_online_and_snapshot_replay_are_bitwise_equal(self):
++        remote = self.prices.copy()
++        remote.iloc[-1] = np.nextafter(103.0, 104.0)
++        remote.loc[pd.Timestamp("2026-11-23")] = np.nextafter(110.0, 109.0)
++        online = self.load(fetch=Mock(return_value=remote))
++        snapshot = self.run / online.record["snapshot"]
++        replay = self.load(cache_path=snapshot, run_dir=self.root / "replay", offline=True)
++        np.testing.assert_array_equal(online.prices, replay.prices)
++        np.testing.assert_array_equal(online.returns, replay.returns)
++        self.assertEqual(replay.record["sha256"], online.record["sha256"])
++        self.assertEqual(replay.record["coverage_status"], "complete")
++
++    def test_concurrent_writer_keeps_newer_cache(self):
++        def competing_update(_):
++            self.cache.write_bytes(b"concurrent version")
++            return self.prices
++
++        with self.assertRaisesRegex(RuntimeError, "outra execução"):
++            self.load(fetch=competing_update)
++        self.assertEqual(self.cache.read_bytes(), b"concurrent version")
++
++    def test_failed_replace_leaves_no_partial_csv(self):
++        with patch("market_data.os.replace", side_effect=OSError("disk error")):
++            with self.assertRaisesRegex(OSError, "disk error"):
++                atomic_bytes(self.cache, b"candidate")
++        self.assertEqual(self.cache.read_bytes(), self.original)
++        self.assertEqual(list(self.cache.parent.iterdir()), [self.cache])
+diff --git a/tests/test_phase1_data.py b/tests/test_phase1_data.py
+index be11ef4..6b3657e 100644
+--- a/tests/test_phase1_data.py
++++ b/tests/test_phase1_data.py
+@@ -10,13 +10,15 @@ import pandas as pd
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+ import var_baseline as phase1
++from b3_sessions import completed_sessions
+ 
+ 
+ def price_fixture(count: int, end: pd.Timestamp | None = None) -> pd.Series:
+     """Pequena fixture deterministica para testar limpeza e contagem, nao mercado."""
+-    if end is None:
+-        end = pd.Timestamp.now(tz="UTC").tz_localize(None).normalize()
+-    dates = pd.date_range(end=end, periods=count, freq="D")
++    dates = completed_sessions("2010-01-01", pd.Timestamp.now(tz="UTC"))
++    if end is not None:
++        dates = dates[dates <= end]
++    dates = dates[-count:]
+     values = 100.0 * np.exp(np.arange(count, dtype=float) * 0.0001)
+     return pd.Series(values, index=dates, name="PETR4")
+ 
+@@ -45,7 +47,7 @@ class Phase1DataTests(unittest.TestCase):
+         cleaned = phase1._normalizar_precos(prices, "PETR4")
+         returns = phase1._calcular_retornos(cleaned, "PETR4")
+         self.assertEqual(len(cleaned), phase1.MIN_RETURNS)
+-        self.assertEqual(len(returns), phase1.MIN_RETURNS - 1)
++        self.assertEqual(len(returns), phase1.MIN_RETURNS - 3)
+         with self.assertRaises(RuntimeError):
+             phase1.validar_amostra(returns, "PETR4")
+ 
+@@ -102,7 +104,7 @@ class Phase1DataTests(unittest.TestCase):
+         today = pd.Timestamp.now(tz="UTC").tz_localize(None).normalize()
+         full = price_fixture(phase1.MIN_RETURNS + 10, end=today)
+         cached = full.iloc[: phase1.MIN_RETURNS + 1]
+-        overlap_day = cached.index[-3]
++        overlap_day = cached.index[-1]
+         download = full.loc[cached.index[-1] - pd.Timedelta(days=phase1.CACHE_OVERLAP_DAYS) :].copy()
+         download.loc[overlap_day] *= 1.01  # revisao do provedor dentro da sobreposicao
+         with tempfile.TemporaryDirectory() as temp_dir:
+@@ -115,7 +117,7 @@ class Phase1DataTests(unittest.TestCase):
+                 actual = phase1.baixar_retornos("PETR4", "PETR4.SA", tentativas=1)
+             expected_start = (cached.index[-1] - pd.Timedelta(days=phase1.CACHE_OVERLAP_DAYS)).strftime("%Y-%m-%d")
+             downloader.assert_called_once_with("PETR4.SA", start=expected_start)
+-            self.assertEqual(actual.index.max(), today)
++            self.assertEqual(actual.index.max(), full.index[-1])
+             saved = pd.read_csv(cache_path, index_col=0, parse_dates=True).iloc[:, 0]
+             self.assertAlmostEqual(saved.loc[overlap_day], download.loc[overlap_day])
+ 
+diff --git a/tests/test_phase2_statistics.py b/tests/test_phase2_statistics.py
+index 002f5df..ca57820 100644
+--- a/tests/test_phase2_statistics.py
++++ b/tests/test_phase2_statistics.py
+@@ -9,6 +9,8 @@ import pandas as pd
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+ import phase2_risk_engine_v2 as phase2
++import var_baseline as phase1
++from b3_sessions import completed_sessions
+ 
+ 
+ class MultipleTestingTests(unittest.TestCase):
+@@ -38,7 +40,7 @@ class MultipleTestingTests(unittest.TestCase):
+ class Phase2SampleTests(unittest.TestCase):
+     def test_validacao_apos_transformacao_em_retornos(self):
+         count = phase2.MIN_TOTAL_RETURNS + 1
+-        dates = pd.date_range("2010-01-01", periods=count, freq="D")
++        dates = completed_sessions("2010-01-01", pd.Timestamp("2017-01-01", tz="UTC"))[:count]
+         prices = pd.Series(np.exp(np.arange(count) * 0.0001), index=dates, name="asset")
+         returns = phase2._validate_return_sample(prices, "asset")
+         self.assertEqual(len(returns), phase2.MIN_TOTAL_RETURNS)
+@@ -49,7 +51,7 @@ class Phase2SampleTests(unittest.TestCase):
+         today = pd.Timestamp.now(tz="UTC").tz_localize(None).normalize()
+         dates = pd.date_range(end=today - pd.Timedelta(days=100), periods=100, freq="D")
+         short_cache = pd.Series(np.exp(np.arange(100) * 0.0001), index=dates, name="PETR4")
+-        full_dates = pd.date_range(end=today, periods=phase2.MIN_TOTAL_RETURNS + 1, freq="D")
++        full_dates = completed_sessions("2010-01-01", pd.Timestamp.now(tz="UTC"))[-(phase2.MIN_TOTAL_RETURNS + 1):]
+         full_history = pd.Series(np.exp(np.arange(len(full_dates)) * 0.0001), index=full_dates, name="PETR4")
+         with tempfile.TemporaryDirectory() as temp_dir:
+             data_dir = Path(temp_dir)
+@@ -126,6 +128,37 @@ class GarchForecastAlignmentTests(unittest.TestCase):
+ 
+         np.testing.assert_array_equal(run(first), run(changed_future))
+ 
++    def test_real_gjr_fit_matches_one_step_forecasts_in_both_phases(self):
++        # Série sintética isolada. Os seis retornos finais ficam fora do ajuste.
++        window = 500
++        rng = np.random.default_rng(57421)
++        shocks = rng.standard_t(7, size=window + 6) * np.sqrt(5 / 7)
++        values = np.empty_like(shocks)
++        variance = 1.0
++        for i, shock in enumerate(shocks):
++            values[i] = np.sqrt(variance) * shock
++            variance = 0.04 + (0.06 + 0.11 * (values[i] < 0)) * values[i]**2 + 0.84 * variance
++        dates = completed_sessions("2010-01-01", pd.Timestamp("2013-01-01", tz="UTC"))[:len(values)]
++        returns = pd.Series(values, index=dates)
++        spec = dict(mean="Zero", vol="GARCH", p=1, o=1, q=1, dist="t")
++        fit = phase2.arch_model(returns.iloc[:window], **spec).fit(disp="off")
++        self.assertEqual(fit.convergence_flag, 0)
++        nu = fit.params["nu"]
++        quantile = phase2.stats.t.ppf(phase2.ALPHA, nu) * np.sqrt((nu - 2) / nu)
++        expected = []
++        for t in range(window, len(returns)):
++            # Cada referência enxerga apenas a série terminada no dia anterior.
++            past = phase2.arch_model(returns.iloc[:t], **spec).fix(fit.params)
++            h_next = past.forecast(horizon=1, reindex=False).variance.iloc[-1, 0]
++            expected.append(quantile * np.sqrt(h_next))
++        with patch.object(phase1, "JANELA", window), patch.object(phase2, "WINDOW", window):
++            var1, diag1 = phase1.var_gjr_garch_t(returns, "fixture")
++            forecasts, diag2 = phase2.gjr_garch_t_var_es(returns, "fixture")
++        for result, diag in [(var1, diag1), (forecasts.var, diag2)]:
++            self.assertEqual([row["status"] for row in diag], ["ok"])
++            self.assertTrue(result.iloc[:window].isna().all())
++            np.testing.assert_allclose(result.iloc[window:], expected, atol=1e-8, rtol=1e-8)
++
+     def test_missing_convergence_flag_is_not_reported_as_success(self):
+         returns = pd.Series(np.linspace(-1.0, 1.0, 6), index=pd.date_range("2020-01-01", periods=6))
+ 
+@@ -172,7 +205,7 @@ class QuantitativeFormulaTests(unittest.TestCase):
+         self.assertAlmostEqual(original.es.iloc[4], altered.es.iloc[4], places=12)
+ 
+     def test_portfolio_return_uses_simple_returns_before_log(self):
+-        dates = pd.date_range("2024-01-01", periods=2, freq="D")
++        dates = pd.to_datetime(["2024-01-02", "2024-01-03"])
+         prices = {
+             "A": pd.Series([100.0, 110.0], index=dates),
+             "B": pd.Series([100.0, 90.0], index=dates),
