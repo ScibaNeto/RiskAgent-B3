@@ -42,6 +42,9 @@ def build(runs, output):
     data = {"run": run.name, "created": manifest["created_at_utc"],
             "tail": read_rows(run / required[1]), "stress": read_rows(run / required[2]),
             "history": asset_history(run, manifest), "coverage": manifest["coverage_status"]}
+    for key, filename in (("levels", "phase2_2_coverage.csv"), ("factors", "phase2_3_factors.csv")):
+        source = run / filename
+        data[key] = read_rows(source) if source.is_file() else []
     if not data["tail"] or not data["stress"]:
         raise ValueError(f"A execução {run.name} tem tabelas vazias.")
     template = (ROOT / "src" / "painel.html").read_text(encoding="utf8")

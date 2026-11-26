@@ -154,3 +154,7 @@ O primeiro resultado visível depois da fundação deve ser uma ficha de PETR4 q
 ### Componente 4 · Análise técnica de PETR4
 
 Parcial. O painel por data e a central didática mostram a média móvel simples de 20 fechamentos ajustados. A janela termina no pregão consultado e exige 20 valores válidos consecutivos. O indicador usa a versão do histórico carregada pelo painel. RSI, MACD e volume seguem pendentes.
+
+## Passagem ao Marco 3 · 25/11/2026
+
+Marco 2 aceito no universo diário demonstrativo. Avançaram os componentes Risco quantitativo, Carteiras, Validação e Painel. Os demais mantêm o estágio registrado. Evidências, limites e reprodução no [aceite do Marco 2](ACEITE_MARCO_2.md). O próximo incremento é o volume negociado na página do ativo.

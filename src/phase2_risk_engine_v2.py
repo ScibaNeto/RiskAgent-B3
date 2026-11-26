@@ -28,12 +28,14 @@ from scipy import stats
 from scipy.special import xlogy
 
 if __package__:
+    from .factor_stress import DIGEST, exchange_returns, factor_stress
     from .gap_sensitivity import gap_sensitivity
     from .risk_extensions import write_extensions
     from . import market_data
     from .b3_sessions import daily_log_returns, session_prices
     from .data_manifest import write_data_manifest
 else:
+    from factor_stress import DIGEST, exchange_returns, factor_stress
     from gap_sensitivity import gap_sensitivity
     from risk_extensions import write_extensions
     import market_data
@@ -161,13 +163,13 @@ def prices_to_returns(prices: pd.Series) -> pd.Series:
 # ---------------------------------------------------------------------------
 # MODELOS DE PREVISAO: CADA PREVISAO USA SOMENTE INFORMACAO PASSADA
 # ---------------------------------------------------------------------------
-def historical_var_es(returns: pd.Series) -> ForecastSet:
+def historical_var_es(returns: pd.Series, alpha: float = ALPHA) -> ForecastSet:
     values = returns.to_numpy(dtype=float)
     var = np.full(len(values), np.nan)
     es = np.full(len(values), np.nan)
     for t in range(WINDOW, len(values)):
         sample = values[t - WINDOW:t]
-        q = float(np.quantile(sample, ALPHA))
+        q = float(np.quantile(sample, alpha))
         tail = sample[sample <= q]
         var[t] = q
         es[t] = float(tail.mean()) if tail.size else q
@@ -177,13 +179,13 @@ def historical_var_es(returns: pd.Series) -> ForecastSet:
     )
 
 
-def ewma_var_es(returns: pd.Series) -> ForecastSet:
+def ewma_var_es(returns: pd.Series, alpha: float = ALPHA) -> ForecastSet:
     # Variancia no instante t usa dados ate t-1 (shift(1)).
     variance = returns.pow(2).ewm(alpha=1.0 - EWMA_LAMBDA, adjust=False).mean().shift(1)
     sigma = np.sqrt(variance.clip(lower=0.0))
-    z = float(stats.norm.ppf(ALPHA))
+    z = float(stats.norm.ppf(alpha))
     var = z * sigma
-    es = -(stats.norm.pdf(z) / ALPHA) * sigma
+    es = -(stats.norm.pdf(z) / alpha) * sigma
     var.iloc[:WINDOW] = np.nan
     es.iloc[:WINDOW] = np.nan
     return ForecastSet(var.rename("VaR"), es.rename("ES"))
@@ -645,6 +647,37 @@ def build_forecast_table(asset: str, returns: pd.Series) -> tuple[pd.DataFrame, 
     return pd.concat(rows, ignore_index=True), diagnostics
 
 
+def compare_levels(returns, forecasts, diagnostics):
+    """Mesmas datas para todos os modelos e níveis em cada ativo."""
+    curves, summaries = [], []
+    for asset, series in returns.items():
+        base = forecasts.loc[forecasts.asset == asset].pivot(index="date", columns="model", values="var_pct")
+        blocks = diagnostics.loc[(diagnostics.asset == asset) & (diagnostics.status == "ok")]
+        results = {}
+        for alpha in (.05, .025, ALPHA):
+            gjr = pd.Series(np.nan, index=series.index)
+            for block in blocks.itertuples():
+                source = base["GJR-GARCH t"].loc[block.forecast_start:block.forecast_end]
+                original_q, _ = _standard_t_var_es(ALPHA, block.nu)
+                new_q, _ = _standard_t_var_es(alpha, block.nu)
+                gjr.loc[source.index] = source * (new_q / original_q)
+            results[(alpha, "GJR-GARCH t")] = gjr
+            results[(alpha, "Simulacao historica")] = historical_var_es(series, alpha).var
+            results[(alpha, "EWMA normal")] = ewma_var_es(series, alpha).var
+        common = pd.DataFrame(results).dropna()
+        for (alpha, model), threshold in common.items():
+            actual = series.loc[threshold.index]
+            hits = int((actual < threshold).sum())
+            n = len(actual)
+            ci = stats.binomtest(hits, n).proportion_ci() if n else None
+            summaries.append(dict(asset=asset, model=model, alpha=alpha, n=n, breaches=hits,
+                                  hit_rate=hits/n if n else np.nan, ci_low=ci.low if ci else np.nan,
+                                  ci_high=ci.high if ci else np.nan, omitted=len(series)-n))
+            curves.append(pd.DataFrame(dict(date=threshold.index, asset=asset, model=model,
+                                            alpha=alpha, var_pct=threshold, return_pct=actual)))
+    return pd.concat(curves, ignore_index=True), pd.DataFrame(summaries)
+
+
 def save_portfolio_weights() -> pd.DataFrame:
     total = sum(PORTFOLIO_WEIGHTS.values())
     if not np.isclose(total, 1.0, atol=1e-8):
@@ -851,6 +884,9 @@ def main() -> None:
             "min_test_obs": MIN_TEST_OBS,
             "garch_refit_every": GARCH_REFIT_EVERY,
             "portfolio_weights": PORTFOLIO_WEIGHTS,
+            "factor_fx_reference_sha256": DIGEST,
+            "var_tail_levels": [.05, .025, ALPHA],
+            "gap_policy": "observed_returns_only",
         },
     )
 
@@ -902,6 +938,10 @@ def main() -> None:
     diagnostics_frame = pd.DataFrame(all_diagnostics)
     gap_sensitivity(forecasts, diagnostics_frame, ALPHA).to_csv(
         OUTPUT_DIR / "phase2_2_gap_sensitivity.csv", index=False)
+    levels, coverage = compare_levels(returns, forecasts, diagnostics_frame)
+    levels.to_csv(OUTPUT_DIR / "phase2_2_levels.csv", index=False, float_format="%.8f")
+    coverage.to_csv(OUTPUT_DIR / "phase2_2_coverage.csv", index=False)
+    factor_stress(returns, PORTFOLIO_WEIGHTS, exchange_returns()).to_csv(OUTPUT_DIR / "phase2_3_factors.csv", index=False)
     diagnostics_frame.to_csv(OUTPUT_DIR / "phase2_garch_diagnostics.csv", index=False)
 
     portfolio_table = forecasts[forecasts["asset"] == "PORTFOLIO_50_50"].copy()

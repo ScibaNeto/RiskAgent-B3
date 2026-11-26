@@ -1,0 +1,282 @@
+{
+  "schema_version": 2,
+  "python_version": "3.14.5",
+  "source_sha256": {
+    "b3_sessions.py": "fa5275597939d7179396de221c60a642765a94e7e2dd5011be64b16ab9da16a0",
+    "daily_update.py": "99366f2e7391d0049ee6dd19a6b7849c8cb7d08610324c6c06a7f9823515d42d",
+    "data_manifest.py": "89806e39a26db1c08f4e1dec09b4b2e176b0ba88f5604ff1015461b1459bcf84",
+    "factor_stress.py": "c1fa04fa19101edb7cfcdb1ce4f428345bb922a244c6389566e50bc0bdede7d2",
+    "gap_sensitivity.py": "9e96c6037703861840f713729065928bf7ca3f2305f684d9b68a0f6b3a131e79",
+    "known_prices.py": "3fe28ad4a8d94af2a56390991626326ab921b84dbbe0705f7d531823b05a09c4",
+    "market_data.py": "96fb50121065b8cc333e55e11401ea141541c8bc09579634512e8d18bf9c1f16",
+    "phase2_risk_engine.py": "f9f238f60980f7d689476df2f3739234a772160f9a13cbab7b504c7e9a392ea8",
+    "phase2_risk_engine_v2.py": "0a387f437501d62d01015865a1712feb6d25c657f772b2d284935afc257f630c",
+    "risk_extensions.py": "848a3c616bd82c4e9281e42f7d4628a754797c74ea9e5c60a056f09e508f568a",
+    "var_baseline.py": "064a72f74877bfd98d5f5e2ca7331009b3ec1631fb35e5a8a477653e19dc543b"
+  },
+  "run_id": "run_20261126T011339_584948Z",
+  "coverage_status": "partial",
+  "created_at_utc": "2026-11-26T01:13:41.235304+00:00",
+  "settings": {
+    "alpha": 0.01,
+    "window": 1000,
+    "min_test_obs": 250,
+    "garch_refit_every": 20,
+    "portfolio_weights": {
+      "PETR4": 0.5,
+      "VALE3": 0.5
+    },
+    "factor_fx_reference_sha256": "cab43a26aed233c286e247a983e1538550f320fe8b34c41791b49808290483fa",
+    "var_tail_levels": [
+      0.05,
+      0.025,
+      0.01
+    ],
+    "gap_policy": "observed_returns_only"
+  },
+  "libraries": {
+    "pandas": "3.1.1",
+    "numpy": "2.5.5",
+    "scipy": "1.18.1",
+    "arch": "9.0.0",
+    "yfinance": "1.8.0",
+    "matplotlib": "3.11.2",
+    "exchange-calendars": "4.13.3",
+    "filelock": "3.32.7"
+  },
+  "assets": [
+    {
+      "asset": "PETR4",
+      "ticker": "PETR4.SA",
+      "provider": "Yahoo Finance",
+      "source_mode": "cache_offline",
+      "start_date": "2010-01-04",
+      "end_date": "2026-11-24",
+      "price_count": 4188,
+      "return_count": 4185,
+      "collected_at_utc": null,
+      "last_observation": "2026-11-24",
+      "price_type": "Close ajustado; auto_adjust=True",
+      "adjustment_convention": "Yahoo Finance ajusta Close para eventos corporativos",
+      "local_file": "C:\\Users\\joses\\Downloads\\riskagent-b3\\outputs\\phase2_1\\runs\\run_20261126T011339_584948Z\\inputs\\PETR4.csv",
+      "sha256": "1ad25362570eb0f288895048da53f7d370c57bcfdac25e802a78b76e26b58341",
+      "quality": {
+        "calendar": "BVMF",
+        "as_of_utc": "2026-11-26T01:13:39.584948+00:00",
+        "last_completed_session": "2026-11-25",
+        "max_stale_sessions": 1,
+        "strict": true,
+        "offline": true,
+        "collected_at_utc": null,
+        "provider_attempts": [],
+        "asset": "PETR4",
+        "quarantine": [],
+        "provider": "Yahoo Finance",
+        "requested_symbol": "PETR4.SA",
+        "cache_checks": {
+          "rows": 4197,
+          "invalid_or_intraday_dates": 0,
+          "future_dates": 0,
+          "null_or_nonfinite_prices": 0,
+          "nonpositive_prices": 0,
+          "duplicate_dates": 0,
+          "out_of_order": false,
+          "invalid_rows": 0
+        },
+        "provider_status": "sem_consulta",
+        "coverage_status": "partial",
+        "freshness": "desatualizado",
+        "completeness": "incompleto",
+        "stale_sessions": 1,
+        "missing_sessions": [
+          "2012-02-22",
+          "2020-11-20"
+        ],
+        "excluded_dates": [
+          "2017-06-15",
+          "2017-09-07",
+          "2017-10-12",
+          "2017-11-02",
+          "2017-11-15",
+          "2017-11-20",
+          "2017-12-25",
+          "2017-12-29",
+          "2018-01-25"
+        ],
+        "missing_before_first_price": 0,
+        "extreme_return_dates": [
+          "2016-03-03",
+          "2017-05-18",
+          "2018-05-28",
+          "2018-06-01",
+          "2020-03-09",
+          "2020-03-12",
+          "2020-03-13",
+          "2020-03-16",
+          "2021-02-22"
+        ],
+        "source_mode": "cache_offline",
+        "sha256": "1ad25362570eb0f288895048da53f7d370c57bcfdac25e802a78b76e26b58341",
+        "snapshot": "inputs/PETR4.csv"
+      },
+      "validation": {
+        "status": "passed",
+        "null_prices": 0,
+        "nonpositive_prices": 0,
+        "duplicate_dates": 0,
+        "dates_ordered": true,
+        "nonfinite_returns": 0,
+        "returns_abs_over_15pct": 9
+      }
+    },
+    {
+      "asset": "VALE3",
+      "ticker": "VALE3.SA",
+      "provider": "Yahoo Finance",
+      "source_mode": "cache_offline",
+      "start_date": "2010-01-04",
+      "end_date": "2026-11-24",
+      "price_count": 4188,
+      "return_count": 4185,
+      "collected_at_utc": null,
+      "last_observation": "2026-11-24",
+      "price_type": "Close ajustado; auto_adjust=True",
+      "adjustment_convention": "Yahoo Finance ajusta Close para eventos corporativos",
+      "local_file": "C:\\Users\\joses\\Downloads\\riskagent-b3\\outputs\\phase2_1\\runs\\run_20261126T011339_584948Z\\inputs\\VALE3.csv",
+      "sha256": "037d375ed377074ff51fb452f6af440d370e7ed8f74b1e25bc07654c7c878f99",
+      "quality": {
+        "calendar": "BVMF",
+        "as_of_utc": "2026-11-26T01:13:39.584948+00:00",
+        "last_completed_session": "2026-11-25",
+        "max_stale_sessions": 1,
+        "strict": true,
+        "offline": true,
+        "collected_at_utc": null,
+        "provider_attempts": [],
+        "asset": "VALE3",
+        "quarantine": [],
+        "provider": "Yahoo Finance",
+        "requested_symbol": "VALE3.SA",
+        "cache_checks": {
+          "rows": 4197,
+          "invalid_or_intraday_dates": 0,
+          "future_dates": 0,
+          "null_or_nonfinite_prices": 0,
+          "nonpositive_prices": 0,
+          "duplicate_dates": 0,
+          "out_of_order": false,
+          "invalid_rows": 0
+        },
+        "provider_status": "sem_consulta",
+        "coverage_status": "partial",
+        "freshness": "desatualizado",
+        "completeness": "incompleto",
+        "stale_sessions": 1,
+        "missing_sessions": [
+          "2012-02-22",
+          "2020-11-20"
+        ],
+        "excluded_dates": [
+          "2017-06-15",
+          "2017-09-07",
+          "2017-10-12",
+          "2017-11-02",
+          "2017-11-15",
+          "2017-11-20",
+          "2017-12-25",
+          "2017-12-29",
+          "2018-01-25"
+        ],
+        "missing_before_first_price": 0,
+        "extreme_return_dates": [
+          "2016-03-08",
+          "2019-01-28",
+          "2020-03-09",
+          "2020-03-10",
+          "2020-03-13"
+        ],
+        "source_mode": "cache_offline",
+        "sha256": "037d375ed377074ff51fb452f6af440d370e7ed8f74b1e25bc07654c7c878f99",
+        "snapshot": "inputs/VALE3.csv"
+      },
+      "validation": {
+        "status": "passed",
+        "null_prices": 0,
+        "nonpositive_prices": 0,
+        "duplicate_dates": 0,
+        "dates_ordered": true,
+        "nonfinite_returns": 0,
+        "returns_abs_over_15pct": 5
+      }
+    },
+    {
+      "asset": "IBOV",
+      "ticker": "^BVSP",
+      "provider": "Yahoo Finance",
+      "source_mode": "cache_offline",
+      "start_date": "2010-01-04",
+      "end_date": "2026-11-24",
+      "price_count": 4187,
+      "return_count": 4183,
+      "collected_at_utc": null,
+      "last_observation": "2026-11-24",
+      "price_type": "Close ajustado; auto_adjust=True",
+      "adjustment_convention": "Yahoo Finance ajusta Close para eventos corporativos",
+      "local_file": "C:\\Users\\joses\\Downloads\\riskagent-b3\\outputs\\phase2_1\\runs\\run_20261126T011339_584948Z\\inputs\\IBOV.csv",
+      "sha256": "f8a9e9eb58439e29e252955fa1147531a54ec0247bfba90cb45543ed49a5bbb7",
+      "quality": {
+        "calendar": "BVMF",
+        "as_of_utc": "2026-11-26T01:13:39.584948+00:00",
+        "last_completed_session": "2026-11-25",
+        "max_stale_sessions": 1,
+        "strict": true,
+        "offline": true,
+        "collected_at_utc": null,
+        "provider_attempts": [],
+        "asset": "IBOV",
+        "quarantine": [],
+        "provider": "Yahoo Finance",
+        "requested_symbol": "^BVSP",
+        "cache_checks": {
+          "rows": 4188,
+          "invalid_or_intraday_dates": 0,
+          "future_dates": 0,
+          "null_or_nonfinite_prices": 0,
+          "nonpositive_prices": 0,
+          "duplicate_dates": 0,
+          "out_of_order": false,
+          "invalid_rows": 0
+        },
+        "provider_status": "sem_consulta",
+        "coverage_status": "partial",
+        "freshness": "desatualizado",
+        "completeness": "incompleto",
+        "stale_sessions": 1,
+        "missing_sessions": [
+          "2012-01-02",
+          "2012-02-22",
+          "2020-11-20"
+        ],
+        "excluded_dates": [
+          "2017-12-29"
+        ],
+        "missing_before_first_price": 0,
+        "extreme_return_dates": [
+          "2020-03-12"
+        ],
+        "source_mode": "cache_offline",
+        "sha256": "f8a9e9eb58439e29e252955fa1147531a54ec0247bfba90cb45543ed49a5bbb7",
+        "snapshot": "inputs/IBOV.csv"
+      },
+      "validation": {
+        "status": "passed",
+        "null_prices": 0,
+        "nonpositive_prices": 0,
+        "duplicate_dates": 0,
+        "dates_ordered": true,
+        "nonfinite_returns": 0,
+        "returns_abs_over_15pct": 1
+      }
+    }
+  ]
+}
