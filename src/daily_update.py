@@ -58,9 +58,10 @@ def update() -> None:
         refresh()
         if already_current(runs, session):
             print(f"Pregão {session} já atualizado.", flush=True)
-            return
-        subprocess.run([sys.executable, str(ROOT / "src" / "phase2_risk_engine_v2.py"),
+        else:
+            subprocess.run([sys.executable, str(ROOT / "src" / "phase2_risk_engine_v2.py"),
                         "--strict-cache", "--max-stale-sessions", "0"], check=True)
+        subprocess.run([sys.executable, "-m", "src.prospective"], cwd=ROOT, check=True)
 
 
 if __name__ == "__main__":

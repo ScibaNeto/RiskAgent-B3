@@ -1,0 +1,4 @@
+asset,weight,role
+PETR4,0.5,posicao_da_carteira
+VALE3,0.5,posicao_da_carteira
+IBOV,,benchmark_separado

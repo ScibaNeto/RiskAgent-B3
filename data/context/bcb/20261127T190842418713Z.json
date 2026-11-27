@@ -1,0 +1,1 @@
+{"source": "bcb", "url": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados?formato=json&dataInicial=18%2F10%2F2026&dataFinal=27%2F11%2F2026", "error": "HTTP Error 304: Not Modified", "known": "2026-11-27T19:08:42.418713+00:00"}

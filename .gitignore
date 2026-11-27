@@ -5,3 +5,5 @@ outputs/**/runs/*/inputs/
 outputs/painel/
 /data/context/.update.lock
 /data/context/raw/
+/outputs/prediction/.lock
+/outputs/phase2_1/runs/.daily.lock

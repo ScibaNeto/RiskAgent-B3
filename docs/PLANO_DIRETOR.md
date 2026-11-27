@@ -176,3 +176,6 @@ A regressão logística usa padronização ajustada no treino e penalização L2
 Na reconstrução retrospectiva de 1.468 previsões, Brier 0,24998 e log loss 0,69313 para o modelo; Brier 0,24984 e log loss 0,69283 para a frequência histórica. A referência teve menor erro em ambas. O modelo permanece experimental. O arquivo `entregas/outputs/Previsoes-PETR4-1-pregao.csv` guarda cada data de origem, data do alvo, resultado e duas probabilidades. As frequências observadas por faixa aparecem no painel. O histórico ajustado pertence à versão do snapshot e pode incorporar revisões posteriores às datas avaliadas. Os resultados são retrospectivos e não constituem evidência prospectiva.
 
 Avançaram Previsão de Mercado, Validação e Painel. Permanecem os horizontes de 5, 20 e 60 pregões, avaliação de retornos e quantis e o registro prospectivo antes do resultado.
+## Marco 4 · Entrega do motor e início da avaliação prospectiva
+
+Horizontes de 1, 5, 20 e 60 pregões integrados com retornos, quantis, comparações cronológicas e registro antes do vencimento. Avançaram os componentes 3 (previsão), 14 (validação) e 15 (painel). A maturação prospectiva segue aberta. [Aceite técnico e evidências](ACEITE_MARCO_4.md).

@@ -6,8 +6,8 @@
 <p><strong class="big" id="live-price">—</strong></p><p id="quote-live" aria-live="polite">Consultando PETR4…</p>
 <p id="bar-volume"></p><h3>Quantas ações trocaram de mãos no último pregão?</h3><p id="daily-volume"></p>
 <small>Fonte: Yahoo Finance. O painel consulta barras de um minuto enquanto esta página está aberta. O horário da barra indica o início do minuto, em Brasília. O fechamento ajustado e o risco diário aparecem abaixo.</small></section>
-<section><h2>O modelo reconheceu altas de PETR4?</h2><p>Experimento histórico. Após cada fechamento, o modelo estima a probabilidade de o preço ajustado subir no próximo pregão. Um fechamento igual conta como ausência de alta.</p><p id="pred-summary"></p><details id="pred-details"><summary>Ver pontuações, datas e calibração</summary><pre id="pred-results" style="white-space:pre-wrap"></pre></details></section>
-<section id="context"><h2>O que ajuda a entender este pregão?</h2>
+<section><h2>O modelo reconheceu altas de PETR4?</h2><p>Experimento histórico. Após cada fechamento, o modelo estima a probabilidade de o preço ajustado subir no horizonte selecionado. Um fechamento igual conta como ausência de alta.</p><label for="pred-horizon">Horizonte em pregões</label><select id="pred-horizon"><option>1</option><option>5</option><option>20</option><option>60</option></select><p id="pred-summary"></p><details id="pred-details"><summary>Ver pontuações, datas e calibração</summary><p>Calibração: o eixo horizontal mostra a chance estimada; o vertical, a frequência de altas. A diagonal indica concordância. Verde: modelo. Marrom: referência.</p><canvas id="calibration-chart" width="500" height="220" role="img" aria-label="Calibração por horizonte; valores na tabela textual abaixo" style="max-width:500px;height:220px"></canvas><pre id="pred-results" style="white-space:pre-wrap"></pre></details></section>
+<section><h2>Previsões registradas antes do resultado</h2><p id="pred-live"></p><ul id="pred-issued"></ul><details><summary>Previsão original e resultados já realizados</summary><p id="pred-outcomes"></p></details><small>Modelos experimentais. As faixas podem falhar, e o treino histórico usa preços ajustados da versão arquivada.</small></section><section id="context"><h2>O que ajuda a entender este pregão?</h2>
 <p>Compare as datas. O balanço reúne vários meses, os juros têm data de referência e o índice muda a cada pregão. Este quadro mostra a versão disponível quando o painel foi gerado.</p>
 <h3>Quanto a Petrobras faturou e lucrou?</h3><p id="ctx-cvm"></p>
 <h3>Qual é a meta da taxa básica de juros?</h3><p id="ctx-bcb"></p><h3>Como estão a inflação e o câmbio?</h3><p id="ctx-ipca"></p><p id="ctx-usd"></p>
@@ -116,9 +116,24 @@ for(const key of ['cvm','bcb','ipca','usd','ibge']){
 }
 const tech=run.technical;
 el('ctx-technical').textContent=tech?'Até '+localDate(tech.date)+', o RSI de 14 pregões marcou '+num(tech.rsi,1)+' de 100. Acima de 50, os ganhos recentes pesaram mais; abaixo, as perdas. O MACD, diferença entre as médias exponenciais de 12 e 26 pregões, foi R$ '+num(tech.macd,2)+' (linha de sinal: R$ '+num(tech.signal,2)+').':'Dados consecutivos insuficientes para os indicadores.';
-const experiment=run.prediction;
+const horizons=run.horizons||{};
+function showExperiment(h){
+const experiment=horizons[h]||run.prediction;
 if(experiment && !experiment.error){
   const e=experiment;
+  el('pred-details').hidden=false;
+  const ctx=el('calibration-chart').getContext('2d');
+  ctx.clearRect(0,0,500,220);ctx.strokeStyle='#999';ctx.beginPath();ctx.moveTo(35,190);ctx.lineTo(480,15);ctx.stroke();
+  for(const [name,color] of [['model','#186445'],['baseline','#925429']]){
+    ctx.beginPath();ctx.strokeStyle=color;ctx.fillStyle=color;
+    for(const [i,b] of e.calibration[name].entries()){
+      const x=35+445*b.mean,y=190-175*b.observed;
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+      ctx.fillRect(x-2,y-2,4,4);
+    }
+    ctx.stroke();
+  }
+  ctx.fillStyle='#354840';ctx.fillText('0%',12,203);ctx.fillText('100%',456,204);ctx.fillText('100%',3,18);
   const better=e.model.brier<e.baseline.brier && e.model.log_loss<e.baseline.log_loss;
   el('pred-summary').textContent='Em '+e.n+' pregões de teste, '+(better?'o modelo teve erro menor nas duas medidas.':'o modelo não superou a referência nas duas medidas.')+' A referência usa a frequência de altas conhecida antes de cada bloco anual. O resultado descreve esta amostra.';
   const score=r=>'Brier '+num(r.brier,5)+' · log loss '+num(r.log_loss,5);
@@ -126,11 +141,24 @@ if(experiment && !experiment.error){
   for(const fold of e.folds)detail.push('Treino: '+fold.train_from+' a '+fold.train_to+' | Calibração: '+fold.cal_from+' a '+fold.cal_to+' | Teste: '+fold.test_from+' a '+fold.test_to+' ('+fold.n+' pregões)');
   detail.push('Calibração no teste: probabilidade média estimada → frequência de alta observada');
   for(const [key,label] of [['model','Modelo'],['baseline','Referência']])for(const b of e.calibration[key])detail.push(label+' · '+num(100*b.mean,1)+'% → '+num(100*b.observed,1)+'% ('+b.n+' pregões)');
+  for(const [title,r] of [['Modelo',e.returns],['Referência',e.reference_returns]])detail.push(title+' · erro absoluto médio do retorno: '+num(r.mae,2)+' pontos percentuais · cobertura da faixa de 80%: '+fmt(100*r.coverage)+' · perdas quantílicas (10% / 90%): '+num(r.q10_loss,3)+' / '+num(r.q90_loss,3));
   el('pred-results').textContent=detail.join('\n');
 }else{
   el('pred-summary').textContent=experiment?.error||'Histórico insuficiente para avaliar o modelo.';
   el('pred-details').hidden=true;
 }
+}
+const select=document.getElementById('pred-horizon');
+select.onchange=()=>showExperiment(select.value);
+showExperiment(1);
+const sealed=run.prospective;
+el('pred-live').textContent=sealed?'Registro de '+new Date(sealed.issued).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+' (Brasília), com preços até '+sealed.origin+'. '+sealed.settled+' de '+sealed.total+' resultados apurados.'+(sealed.after_next_open?' O pregão seguinte já havia aberto na emissão.':''):'Ainda não há emissão registrada.';
+if(sealed)for(const row of sealed.forecasts){
+  const li=document.createElement('li');
+  li.textContent=row.horizon+' pregão(ões) · até '+row.target+' · chance experimental de alta '+fmt(100*row.model)+' (referência '+fmt(100*row.baseline)+') · retorno estimado '+fmt(row.point)+' · faixa histórica estimada de 80%: '+fmt(row.q10)+' a '+fmt(row.q90)+'.';
+  el('pred-issued').append(li);
+}
+el('pred-outcomes').textContent=sealed?.outcomes?.length?sealed.outcomes.map(r=>r.origin+' → '+r.target+' ('+r.horizon+' pregões): '+fmt(100*r.model)+' de chance de alta, retorno estimado '+fmt(r.point)+', realizado '+fmt(r.actual_pct)+'.').join(' '):'Aguardando fechamentos e apuração pela rotina diária.';
 const regime=run.regime;
 el('ctx-regime').textContent=regime?'Até '+localDate(regime.date)+', o índice teve variação de '+fmt(regime.change)+' em 20 pregões ('+regime.direction+'). A volatilidade, medida da oscilação dos retornos, foi '+fmt(regime.volatility)+' ao ano. Ficou '+regime.variability+' em relação aos 60 pregões anteriores ('+fmt(regime.reference)+').':'Histórico insuficiente para classificar o período.';
 /*PRICE_AVERAGE*/
