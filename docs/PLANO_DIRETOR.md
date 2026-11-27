@@ -191,3 +191,6 @@ Na execução `run_20261127T190904_280437Z`, de 18/11/2025 a 26/11/2026, os 252 
 O teste específico verifica exemplos calculados à mão de pesos, retornos, custos, volume negociado, lacunas, virada de mês e posições extremas. Passaram 82 testes Python e os dois arquivos de testes JavaScript. A interação com as três regras foi verificada no navegador.
 
 Componentes que avançaram no roteiro de 15: 8 (carteiras), 9 (pesquisa de estratégias), 14 (validação) e 15 (painel). Os demais preservam o estado anterior. Próxima etapa: Marco 6, scanner de oportunidades com cobertura e divergência dos sinais.
+## Marco 6 · Aceite da primeira integração
+
+Scanner de PETR4 e VALE3 integrado com risco, tendência, contexto, previsões experimentais e evidências de qualidade. A [revisão dos Marcos 1 a 6](REVISAO_MARCOS_1_A_6.md) atualiza o estado dos 15 componentes, registra testes e limitações e orienta a passagem ao Copilot.

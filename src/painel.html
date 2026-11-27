@@ -2,6 +2,9 @@
 <style>
 :root{color-scheme:light;--ink:#182d28;--line:#b5c2b5;--accent:#22604b}*{box-sizing:border-box}body{margin:0;background:#f4f4ec;color:var(--ink);font:16px/1.55 "Source Sans 3",system-ui,sans-serif}header{background:#182d28;color:#f4f4ec;padding:15px max(5vw,20px);display:flex;justify-content:space-between;gap:12px}main{max-width:1080px;margin:auto;padding:35px 5vw 45px}h1,h2{font-family:"Source Serif 4",Georgia,serif;font-weight:500;line-height:1.08}h1{font-size:clamp(42px,7vw,78px);margin:12px 0}h2{font-size:32px;margin:6px 0 18px}section{border-top:1px solid var(--line);padding:24px 0}select{font:inherit;background:#fff;color:var(--ink);padding:7px 12px;border:1px solid #66796b;border-radius:4px;max-width:100%}label{display:block;margin-bottom:6px;font-weight:600}.table{overflow:auto;margin-top:16px}table{width:100%;border-collapse:collapse;min-width:490px}td,th{padding:10px 8px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}th:first-child,td:first-child{text-align:left}th{font-size:14px}strong.big{font:52px Georgia,serif;color:var(--accent)}small,footer{color:#42594f}.stress{margin:16px 0 4px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}footer{overflow-wrap:anywhere;font-size:13px}.pair{display:flex;align-items:center;gap:12px;margin:6px 0}.barbase{width:min(50vw,350px);background:#dce3d9;height:9px}.bar{background:#946149;height:100%}.pos{background:#307358}select:focus-visible{outline:3px solid #d0822b}.filters{display:flex;flex-wrap:wrap;gap:20px}.filters input{font:inherit;color:inherit;padding:7px;border:1px solid #66796b;border-radius:4px}canvas{width:100%;height:195px;display:block;background:#fbfbf6}.filters label{font-size:15px}#drawdown{font-weight:700}</style>
 <header><b>RiskAgent B3</b><span>Pesquisa quantitativa</span></header><main><h1>Painel de risco</h1><p id="when"></p>
+<section id="scanner"><h2>Quais ativos merecem pesquisa?</h2><p id="scan-summary"></p><div id="scan-cards"></div>
+<details><summary>Como a triagem decide?</summary><p>Para entrar na lista, a ação precisa ter subido em 20 pregões e superado o Ibovespa no mesmo período. Exigimos preços recentes, uma janela sem lacunas e o risco do último pregão. Uma violação de risco ou uma previsão disponível em sentido oposto gera um alerta de conflito. A previsão é experimental e tem um horizonte mais curto. A lista pode ficar vazia.</p>
+<p>Os pesos da carteira não entram nessa regra. Fundamentos, juros e notícias oferecem contexto para investigar o resultado. A comparação abrange PETR4 e VALE3, em ordem alfabética, sem pontuação de compra ou venda.</p></details></section>
 <section id="live" hidden><h2>PETR4 durante o pregão</h2><p id="session-live"></p>
 <p><strong class="big" id="live-price">—</strong></p><p id="quote-live" aria-live="polite">Consultando PETR4…</p>
 <p id="bar-volume"></p><h3>Quantas ações trocaram de mãos no último pregão?</h3><p id="daily-volume"></p>
@@ -168,6 +171,22 @@ if(sealed)for(const row of sealed.forecasts){
 el('pred-outcomes').textContent=sealed?.outcomes?.length?sealed.outcomes.map(r=>r.origin+' → '+r.target+' ('+r.horizon+' pregões): '+fmt(100*r.model)+' de chance de alta, retorno estimado '+fmt(r.point)+', realizado '+fmt(r.actual_pct)+'.').join(' '):'Aguardando fechamentos e apuração pela rotina diária.';
 const regime=run.regime;
 el('ctx-regime').textContent=regime?'Até '+localDate(regime.date)+', o índice teve variação de '+fmt(regime.change)+' em 20 pregões ('+regime.direction+'). A volatilidade, medida da oscilação dos retornos, foi '+fmt(regime.volatility)+' ao ano. Ficou '+regime.variability+' em relação aos 60 pregões anteriores ('+fmt(regime.reference)+').':'Histórico insuficiente para classificar o período.';
+const scan=run.scanner;
+const describedDate=s=>s?localDate(s):'indisponível';
+el('scan-summary').textContent=(scan.candidates.length?'Para pesquisa: '+scan.candidates.join(', ')+'.':'Nenhum ativo passou na triagem.')+' Fechamentos de '+describedDate(scan.date)+' · Pregão esperado: '+describedDate(scan.expected)+'.';
+for(const c of scan.cards){
+  const box=document.createElement('article');
+  const title=document.createElement('h3');title.textContent=c.asset+' · '+c.status;box.append(title);
+  function line(message){const p=document.createElement('p');p.textContent=message;box.append(p);}
+  for(const reason of [...c.missing,...c.conflicts])line(reason);
+  if(c.momentum!=null)line('Em 20 pregões: '+fmt(c.momentum)+' no preço ajustado e '+num(c.relative,2)+' pontos percentuais em relação ao Ibovespa.');
+  if(c.var!=null)line('No último pregão: retorno logarítmico de '+fmt(c.realized)+' e limite diário de risco (VaR 99%) de '+fmt(c.var)+'.');
+  line('Cobertura do histórico: '+c.history_quality+'. '+(c.forecast?'Previsão experimental para '+localDate(c.forecast.target)+': '+fmt(100*c.forecast.model)+' de chance de alta.':'Sem previsão de direção vinculada a esta execução para o ativo.'));
+  const fund=run.context.cvm?.record;
+  line(c.asset==='PETR4' && fund?'Petrobras: margem líquida consolidada de '+fmt(fund.data.margin)+' até '+localDate(fund.data.period)+'.'+(run.context.cvm.failure?' A última consulta falhou.':''):'Fundamentos específicos indisponíveis nesta ficha.');
+  el('scan-cards').append(box);
+}
+const contextLink=document.createElement('a');contextLink.href='#context';contextLink.textContent='Consultar Selic, câmbio, notícias e regime de mercado com as respectivas datas';el('scan-cards').append(contextLink);
 /*PORTFOLIO_LAB*/
 setupPortfolioLab(run.history);
 /*PRICE_AVERAGE*/

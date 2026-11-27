@@ -4,12 +4,13 @@ import csv
 import json
 import webbrowser
 from datetime import datetime, timezone
-from src import market_context, prediction, prospective
+from src import market_context, prediction, prospective, opportunity
 from pathlib import Path
 
 import pandas as pd
 from src.b3_sessions import session_prices
 from src.known_prices import snapshot_prices
+from src.market_data import atomic_bytes
 
 ROOT = Path(__file__).resolve().parent
 
@@ -54,6 +55,9 @@ def build(runs, output):
     except ValueError as exc:
         data["prediction"] = {"error": str(exc)}
     data["prospective"] = prospective.report(ROOT / "outputs/prediction")
+    day = data["history"][-1]["date"] if data["history"] else None
+    quality = {entry["asset"]: entry.get("quality", {}) for entry in manifest["assets"]}
+    data["scanner"] = opportunity.scan(data, quality, opportunity.latest_risks(run, day), cutoff)
     data["regime"] = market_context.market_regime(data["history"])
     for key, filename in (("levels", "phase2_2_coverage.csv"), ("factors", "phase2_3_factors.csv")):
         source = run / filename
@@ -66,7 +70,7 @@ def build(runs, output):
     template = template.replace("/*PORTFOLIO_LAB*/", (ROOT / "src" / "portfolio_lab.js").read_text(encoding="utf8"))
     payload = json.dumps(data, ensure_ascii=True).replace("<", "\\u003c")
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(template.replace("/*RUN_DATA*/", payload), encoding="utf8")
+    atomic_bytes(output, template.replace("/*RUN_DATA*/", payload).encode("utf8"))
     return output
 
 

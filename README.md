@@ -118,3 +118,7 @@ Abra "entregas/outputs/Painel-Etapa-3.html" no navegador ou execute o painel em 
 ## Laboratório de carteiras
 
 Abra "entregas/outputs/Painel-Marco-5.html" e procure Laboratório de carteiras. No painel gerado por painel.py, os mesmos controles usam a execução local selecionada. Rode "node tests/test_portfolio_lab.cjs" para verificar as regras de simulação.
+
+## Scanner de oportunidades
+
+Abra entregas/outputs/Painel-Marco-6.html para consultar a primeira integração. A rotina diária regenera o painel local; atualize a página para ler o novo relatório. [Resultados e revisão dos seis marcos](docs/REVISAO_MARCOS_1_A_6.md).
