@@ -114,3 +114,7 @@ Respostas válidas alteradas ficam compactadas em `data/raw/intraday` com instan
 ## Contexto de mercado
 
 Abra "entregas/outputs/Painel-Etapa-3.html" no navegador ou execute o painel em modo ao vivo. A página reúne Petrobras, Selic, IPCA, câmbio, notícias econômicas e regime do Ibovespa. [Fontes, critérios e comandos de atualização](docs/ACEITE_MARCO_3.md).
+
+## Laboratório de carteiras
+
+Abra "entregas/outputs/Painel-Marco-5.html" e procure Laboratório de carteiras. No painel gerado por painel.py, os mesmos controles usam a execução local selecionada. Rode "node tests/test_portfolio_lab.cjs" para verificar as regras de simulação.

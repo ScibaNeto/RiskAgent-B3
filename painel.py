@@ -23,7 +23,7 @@ def asset_history(run, manifest):
     entries = {entry["asset"]: entry for entry in manifest["assets"]}
     if not {"PETR4", "IBOV"} <= entries.keys() or not (run / "phase2_forecasts.csv").exists():
         return []
-    prices = pd.concat({key: snapshot_prices(run, entries[key]) for key in ("PETR4", "IBOV")}, axis=1)
+    prices = pd.concat({key: snapshot_prices(run, entries[key]) for key in ("PETR4", "IBOV", "VALE3") if key in entries}, axis=1)
     frame = session_prices(prices)
     frame["drawdown"] = 100 * (frame.PETR4 / frame.PETR4.cummax() - 1)
     forecasts = pd.read_csv(run / "phase2_forecasts.csv", parse_dates=["date"])
@@ -63,6 +63,7 @@ def build(runs, output):
     template = (ROOT / "src" / "painel.html").read_text(encoding="utf8")
     template = template.replace("/*PRICE_AVERAGE*/", (ROOT / "src" / "price_average.js").read_text(encoding="utf8"))
     template = template.replace("/*ASSET_VIEW*/", (ROOT / "src" / "asset_view.js").read_text(encoding="utf8"))
+    template = template.replace("/*PORTFOLIO_LAB*/", (ROOT / "src" / "portfolio_lab.js").read_text(encoding="utf8"))
     payload = json.dumps(data, ensure_ascii=True).replace("<", "\\u003c")
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(template.replace("/*RUN_DATA*/", payload), encoding="utf8")

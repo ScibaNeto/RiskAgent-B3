@@ -179,3 +179,15 @@ Avançaram Previsão de Mercado, Validação e Painel. Permanecem os horizontes 
 ## Marco 4 · Entrega do motor e início da avaliação prospectiva
 
 Horizontes de 1, 5, 20 e 60 pregões integrados com retornos, quantis, comparações cronológicas e registro antes do vencimento. Avançaram os componentes 3 (previsão), 14 (validação) e 15 (painel). A maturação prospectiva segue aberta. [Aceite técnico e evidências](ACEITE_MARCO_4.md).
+
+## Marco 5 · Aceite de Carteiras e Estratégias
+
+Simulação retrospectiva de uma carteira hipotética limitada a PETR4 e VALE3. O laboratório permite variar pesos de 0% a 100%, dia de corte, janela, regra de alocação e custo proporcional. Mostra saldo bruto e líquido, custos debitados, volume negociado acumulado, queda máxima desde um pico, correlação diária, referência do Ibovespa e impacto de um choque nos pesos finais. Usa a maior sequência de fechamentos BVMF consecutivos disponível dentro da janela. Nenhum pregão faltante é preenchido artificialmente.
+
+As três regras são pré-definidas: compra e manutenção, pesos constantes por pregão e pesos restaurados na virada do mês. A execução usa o fechamento anterior ao retorno; a taxa é debitada em ambas as pontas sobre os valores efetivamente negociados. A carteira começa já investida, sem custo inicial ou liquidação final. Preços ajustados, posições fracionárias e universo fixo; ordens reais, impostos, liquidez e impacto de mercado estão fora do escopo demonstrativo.
+
+Na execução `run_20261127T190904_280437Z`, de 18/11/2025 a 26/11/2026, os 252 retornos diários da carteira 50/50 sem custo coincidiram com a referência arquivada do Risk Engine na precisão do CSV (diferença máxima 5,1 × 10⁻⁹ ponto percentual de retorno logarítmico). Com 10 pontos-base por lado, R$ 1.000 iniciais produziram R$ 1.210,27 na regra diária, R$ 1.222,24 na mensal e R$ 1.206,78 mantendo as posições. O índice terminou em R$ 1.129,55 equivalentes. A classificação entre regras depende do período e das premissas.
+
+O teste específico verifica exemplos calculados à mão de pesos, retornos, custos, volume negociado, lacunas, virada de mês e posições extremas. Passaram 82 testes Python e os dois arquivos de testes JavaScript. A interação com as três regras foi verificada no navegador.
+
+Componentes que avançaram no roteiro de 15: 8 (carteiras), 9 (pesquisa de estratégias), 14 (validação) e 15 (painel). Os demais preservam o estado anterior. Próxima etapa: Marco 6, scanner de oportunidades com cobertura e divergência dos sinais.
