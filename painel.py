@@ -68,6 +68,8 @@ def build(runs, output):
     template = template.replace("/*PRICE_AVERAGE*/", (ROOT / "src" / "price_average.js").read_text(encoding="utf8"))
     template = template.replace("/*ASSET_VIEW*/", (ROOT / "src" / "asset_view.js").read_text(encoding="utf8"))
     template = template.replace("/*PORTFOLIO_LAB*/", (ROOT / "src" / "portfolio_lab.js").read_text(encoding="utf8"))
+    for marker, filename in (("/*DASHBOARD_CSS*/", "dashboard.css"), ("/*DASHBOARD_JS*/", "dashboard.js")):
+        template = template.replace(marker, (ROOT / "src" / filename).read_text(encoding="utf8"))
     payload = json.dumps(data, ensure_ascii=True).replace("<", "\\u003c")
     output.parent.mkdir(parents=True, exist_ok=True)
     atomic_bytes(output, template.replace("/*RUN_DATA*/", payload).encode("utf8"))
