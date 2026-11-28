@@ -51,7 +51,7 @@
       g.strokeStyle='#3c3d3d';g.lineWidth=1;g.beginPath();g.moveTo(left,y);g.lineTo(right,y);g.stroke();
       g.fillStyle='#a9abaa';g.fillText(num(max-(max-min)*j/3,key==='IBOV'?0:2),right+5,y);
     }
-    g.strokeStyle='#ffcb05';g.lineWidth=2.4;g.beginPath();let connected=false;
+    g.strokeStyle=getComputedStyle(c).getPropertyValue('--brand-light').trim();g.lineWidth=2.4;g.beginPath();let connected=false;
     rows.forEach((r,i)=>{
       if(!Number.isFinite(r[key])){connected=false;return}
       const x=left+i*(right-left)/Math.max(1,rows.length-1);
