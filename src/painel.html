@@ -1,7 +1,7 @@
 <!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RiskAgent B3 · Painel de risco</title>
 <style>/*DASHBOARD_CSS*/</style>
 <header><div class="mast"><a class="brand" href="#overview" aria-label="RiskAgent B3, visão geral"><span>Risk<strong>Agent</strong></span><span class="brand-market">B3</span></a>
-<nav aria-label="Seções do painel"><div class="nav-inner"><a href="#overview">Visão geral</a><a href="#mercado">Mercado</a><a href="#scanner">Scanner</a><a href="#risco">Risco</a><a href="#previsoes">Previsões</a><a href="#carteiras">Carteiras</a><a href="#context">Contexto</a></div></nav></div></header>
+<nav aria-label="Seções do painel"><div class="nav-inner"><a href="#overview">Visão geral</a><a href="#mercado">Mercado</a><a href="#scanner">Scanner</a><a href="#risco">Risco</a><a href="#previsoes">Previsões</a><a href="#carteiras">Carteiras</a><a href="#context">Contexto</a><a href="#copilot">Copilot</a></div></nav></div></header>
 <main><div class="intro"><div><h1 id="page-title">Visão de mercado</h1><p id="when"></p></div><canvas id="market-relief" aria-hidden="true"></canvas></div>
 <section id="overview"><div class="overview-grid"><div class="chart-surface"><div class="topline"><h2 id="focus-label">PETR4</h2><div class="periods" aria-label="Período do gráfico"></div></div><div class="quote-line"><strong id="focus-price"></strong><span id="focus-change" class="delta"></span></div><small id="focus-unit"></small><canvas id="focus-chart" role="img"></canvas><div class="chart-meta"><span id="focus-start"></span><span id="focus-end"></span></div></div><div class="watch"><div class="watch-head"><h2>Ativos acompanhados</h2></div><div id="watchlist"></div><a class="jump" href="#mercado">Explorar mercado →</a></div></div>
 <div class="brief"><h2>Scanner de oportunidades</h2><p id="brief-result"></p><a href="#scanner">Ver análise dos ativos →</a></div></section>
@@ -20,6 +20,9 @@
 <label>Até a data <input id="lab-date" type="date"></label><label>Janela máxima <select id="lab-period"><option value="63">63 pregões</option><option value="252" selected>252 pregões</option><option value="0">Trecho contínuo disponível</option></select></label></div>
 <p id="lab-summary" aria-live="polite"></p><p id="lab-facts"></p><p id="lab-stress"></p>
 <details><summary>Como funciona a simulação?</summary><p>A carteira começa já investida. As regras são definidas antes do período. O ajuste ocorre ao fechamento anterior ao próximo retorno, com posições fracionárias. Na regra mensal, ocorre no último fechamento antes da mudança de mês. O custo incide sobre o valor comprado e vendido; 10 pontos-base equivalem a R$ 1 por R$ 1.000 negociados. O volume acumulado soma as proporções compradas e vendidas em cada ajuste.</p><p>Os preços são ajustados e o índice é uma referência sem custos. O cálculo termina no fechamento selecionado ou anterior e começa após a última lacuna de qualquer série, dentro da janela pedida. Corretagem fixa, impostos, liquidez e impacto das ordens ficaram fora desta simulação retrospectiva.</p></details></section>
+<section id="copilot"><h2>Consulte os dados do painel</h2><p>Escolha uma pergunta para consultar o último relatório salvo. A resposta traz a data do pregão e a fonte usada no cálculo.</p>
+<div class="filters"><label>Ativo<select id="copilot-asset"><option>PETR4</option><option>VALE3</option></select></label><label>Pergunta<select id="copilot-topic"><option value="close">Qual foi o fechamento ajustado?</option><option value="risk">A perda ultrapassou o limite estimado?</option><option value="screen">Por que o scanner deu esse resultado?</option></select></label></div>
+<p id="copilot-answer" aria-live="polite"></p><small id="copilot-source"></small><p><a id="copilot-link">Ver seção de origem →</a></p></section>
 <section id="context"><h2>O que ajuda a entender este pregão?</h2>
 <p>Compare as datas. O balanço reúne vários meses, os juros têm data de referência e o índice muda a cada pregão. Este quadro mostra a versão disponível quando o painel foi gerado.</p>
 <h3>Quanto a Petrobras faturou e lucrou?</h3><p id="ctx-cvm"></p>
@@ -194,5 +197,7 @@ const contextLink=document.createElement('a');contextLink.href='#context';contex
 setupPortfolioLab(run.history);
 /*PRICE_AVERAGE*/
 /*ASSET_VIEW*/
+/*COPILOT_JS*/
+setupCopilot(run);
 /*DASHBOARD_JS*/
 </script></html>

@@ -194,3 +194,7 @@ Componentes que avançaram no roteiro de 15: 8 (carteiras), 9 (pesquisa de estra
 ## Marco 6 · Aceite da primeira integração
 
 Scanner de PETR4 e VALE3 integrado com risco, tendência, contexto, previsões experimentais e evidências de qualidade. A [revisão dos Marcos 1 a 6](REVISAO_MARCOS_1_A_6.md) atualiza o estado dos 15 componentes, registra testes e limitações e orienta a passagem ao Copilot.
+
+## Marco 7 em andamento · Consultas locais
+
+A aba Copilot consulta fechamento ajustado, risco e triagem para PETR4 e VALE3 com fonte, data e execução. Perguntas guiadas e respostas determinísticas funcionam offline. Integração generativa, perguntas livres e recuperação de documentos seguem pendentes.
