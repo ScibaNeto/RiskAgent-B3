@@ -14,11 +14,11 @@ function drawSeries(canvas, points, curves, markBreaches) {
   const x = i => 56 + i * (width - 73) / Math.max(points.length - 1, 1);
   const y = v => 15 + (high - v) * (height - 50) / (high - low || 1);
   ctx.font = '12px system-ui';
-  ctx.fillStyle = '#42594f';
+  ctx.fillStyle = '#b4bab9';
   for (let k = 0; k <= 3; k++) {
     const value = low + k * (high - low) / 3;
     ctx.fillText(num(value,1), 4, y(value) + 4);
-    ctx.strokeStyle = '#d8ded5';
+    ctx.strokeStyle = '#333437';
     ctx.beginPath(); ctx.moveTo(50,y(value)); ctx.lineTo(width-10,y(value)); ctx.stroke();
   }
   ctx.fillText(points[0].date.split('-').reverse().join('/'), 54,height-8);
@@ -42,7 +42,7 @@ function drawSeries(canvas, points, curves, markBreaches) {
     }
   }
   if(markBreaches){
-    ctx.fillStyle='#aa3230';
+    ctx.fillStyle='#ff9592';
     points.forEach((row,i)=>{
       if(Number.isFinite(row.var_pct) && Number.isFinite(row.return_pct) && row.return_pct<row.var_pct){
         ctx.beginPath();ctx.arc(x(i),y(row.return_pct),3,0,2*Math.PI);ctx.fill();
@@ -77,8 +77,8 @@ function setupAssetView(history){
     const indexText=v=>Number.isFinite(v)?num(v,2):'indisponível';
     el('pricesummary').textContent=day+' · PETR4 (verde) '+indexText(last.petr)+' · Ibovespa (marrom) '+indexText(last.ibov);
     el('drawdown').textContent=valueText(last.drawdown);
-    drawSeries(el('performance'),chart,[{key:'petr',color:'#186445'},{key:'ibov',color:'#925429'}],false);
-    drawSeries(el('riskplot'),period,[{key:'return_pct',color:'#357658'},{key:'var_pct',color:'#925429'}],true);
+    drawSeries(el('performance'),chart,[{key:'petr',color:'#87c8a8'},{key:'ibov',color:'#d6aa8b'}],false);
+    drawSeries(el('riskplot'),period,[{key:'return_pct',color:'#87c8a8'},{key:'var_pct',color:'#d6aa8b'}],true);
     const available=Number.isFinite(last.return_pct)&&Number.isFinite(last.var_pct);
     const status=available?(last.return_pct<last.var_pct?'Perda acima do VaR.':'Dentro do limite previsto.'):'Comparação indisponível neste pregão.';
     el('riskday').textContent=day+' · Retorno '+valueText(last.return_pct)+' · VaR '+valueText(last.var_pct)+'. '+status;

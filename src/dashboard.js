@@ -24,8 +24,36 @@
     button.setAttribute('aria-label',n+' pregões');button.onclick=()=>{length=n;draw()};
     ranges.set(n,button);document.querySelector('.periods').append(button);
   }
+  // A small isometric relief based on the last 32 complete closing prices.
+  function drawRelief(){
+    const c=el('market-relief');
+    const w=c.clientWidth,h=c.clientHeight;
+    if(!w||!h)return;
+    const ratio=window.devicePixelRatio||1;
+    c.width=w*ratio;c.height=h*ratio;
+    const g=c.getContext('2d');g.scale(ratio,ratio);
+    const values=history.map(r=>r[key]).filter(Number.isFinite).slice(-32);
+    if(values.length<2)return;
+    const lo=Math.min(...values),hi=Math.max(...values);
+    const step=Math.min(w/50,h/29),cx=w*.52,cy=h*.27;
+    function face(points,color){
+      g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();
+      g.fillStyle=color;g.fill();
+    }
+    for(let i=0;i<24;i++)for(let j=0;j<17;j++){
+      const t=(values[Math.round(i*(values.length-1)/23)]-lo)/(hi-lo||1);
+      const ridge=1-Math.abs(j-8)/9, z=step*(.8+9*t*ridge*ridge);
+      const x=cx+(i-j-4)*step,y=cy+(i+j)*step*.45;
+      const top=[x,y-z],r=[x+step*.94,y-z+step*.43],b=[x,y-z+step*.86],l=[x-step*.94,y-z+step*.43];
+      const lum=Math.round(58+124*ridge*(.3+.7*t));
+      face([l,b,[b[0],b[1]+z],[l[0],l[1]+z]],'rgb(42,45,53)');
+      face([b,r,[r[0],r[1]+z],[b[0],b[1]+z]],'rgb(27,29,35)');
+      face([top,r,b,l], 'rgb('+lum+','+(lum+4)+','+(lum+12)+')');
+    }
+  }
   function draw(){
     if(el('overview').classList.contains('page-off'))return;
+    drawRelief();
     for(const [n,b] of ranges)b.setAttribute('aria-pressed',String(n===length));
     for(const [k,b] of buttons)b.setAttribute('aria-pressed',String(k===key));
     el('focus-label').textContent=names[key]+' · '+key;
@@ -65,7 +93,8 @@
     const page=titles[hash]?hash:(document.getElementById(hash)?.closest('section')?.dataset.page || 'overview');
     for(const section of sections)section.classList.toggle('page-off',(section.dataset.page||section.id)!==page);
     for(const link of links){if(link.hash==='#'+page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current')}
-    el('page-title').textContent=titles[page];
+    document.querySelector('main').classList.toggle('overview-active',page==='overview');
+    el('page-title').textContent=page==='overview'?'Visão de mercado':titles[page];
     document.title=titles[page]+' · RiskAgent B3';
     window.scrollTo(0,0);
     window.dispatchEvent(new Event('resize'));

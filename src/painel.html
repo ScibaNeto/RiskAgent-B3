@@ -1,8 +1,8 @@
 <!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RiskAgent B3 · Painel de risco</title>
 <style>/*DASHBOARD_CSS*/</style>
-<header><div class="mast"><a class="brand" href="#overview" aria-label="RiskAgent B3, visão geral"><span>Risk<strong>Agent</strong></span><span class="brand-market">B3</span></a><span class="platform">Plataforma de análise</span></div></header>
-<nav aria-label="Seções do painel"><div class="nav-inner"><a href="#overview">Visão geral</a><a href="#mercado">Mercado</a><a href="#scanner">Scanner</a><a href="#risco">Risco</a><a href="#previsoes">Previsões</a><a href="#carteiras">Carteiras</a><a href="#context">Contexto</a></div></nav>
-<main><h1 id="page-title">Visão geral</h1><p id="when"></p>
+<header><div class="mast"><a class="brand" href="#overview" aria-label="RiskAgent B3, visão geral"><span>Risk<strong>Agent</strong></span><span class="brand-market">B3</span></a>
+<nav aria-label="Seções do painel"><div class="nav-inner"><a href="#overview">Visão geral</a><a href="#mercado">Mercado</a><a href="#scanner">Scanner</a><a href="#risco">Risco</a><a href="#previsoes">Previsões</a><a href="#carteiras">Carteiras</a><a href="#context">Contexto</a></div></nav></div></header>
+<main><div class="intro"><div><h1 id="page-title">Visão de mercado</h1><p id="when"></p></div><canvas id="market-relief" aria-hidden="true"></canvas></div>
 <section id="overview"><div class="overview-grid"><div class="chart-surface"><div class="topline"><h2 id="focus-label">PETR4</h2><div class="periods" aria-label="Período do gráfico"></div></div><div class="quote-line"><strong id="focus-price"></strong><span id="focus-change" class="delta"></span></div><small id="focus-unit"></small><canvas id="focus-chart" role="img"></canvas><div class="chart-meta"><span id="focus-start"></span><span id="focus-end"></span></div></div><div class="watch"><div class="watch-head"><h2>Ativos acompanhados</h2></div><div id="watchlist"></div><a class="jump" href="#mercado">Explorar mercado →</a></div></div>
 <div class="brief"><h2>Scanner de oportunidades</h2><p id="brief-result"></p><a href="#scanner">Ver análise dos ativos →</a></div></section>
 <section id="scanner"><h2>Quais ativos merecem pesquisa?</h2><p id="scan-summary"></p><div id="scan-cards"></div>
@@ -137,7 +137,7 @@ if(experiment && !experiment.error){
   el('pred-details').hidden=false;
   const ctx=el('calibration-chart').getContext('2d');
   ctx.clearRect(0,0,500,220);ctx.strokeStyle='#999';ctx.beginPath();ctx.moveTo(35,190);ctx.lineTo(480,15);ctx.stroke();
-  for(const [name,color] of [['model','#186445'],['baseline','#925429']]){
+  for(const [name,color] of [['model','#87c8a8'],['baseline','#d6aa8b']]){
     ctx.beginPath();ctx.strokeStyle=color;ctx.fillStyle=color;
     for(const [i,b] of e.calibration[name].entries()){
       const x=35+445*b.mean,y=190-175*b.observed;
@@ -146,7 +146,7 @@ if(experiment && !experiment.error){
     }
     ctx.stroke();
   }
-  ctx.fillStyle='#354840';ctx.fillText('0%',12,203);ctx.fillText('100%',456,204);ctx.fillText('100%',3,18);
+  ctx.fillStyle='#b4bab9';ctx.fillText('0%',12,203);ctx.fillText('100%',456,204);ctx.fillText('100%',3,18);
   const better=e.model.brier<e.baseline.brier && e.model.log_loss<e.baseline.log_loss;
   el('pred-summary').textContent='Em '+e.n+' pregões de teste, '+(better?'o modelo teve erro menor nas duas medidas.':'o modelo não superou a referência nas duas medidas.')+' A referência usa a frequência de altas conhecida antes de cada bloco anual. O resultado descreve esta amostra.';
   const score=r=>'Brier '+num(r.brier,5)+' · log loss '+num(r.log_loss,5);
